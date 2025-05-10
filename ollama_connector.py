@@ -1,4 +1,6 @@
-import os
+
+import os # <--- THIS IS THE FIX
+import re 
 import requests
 import json
 from config import OLLAMA_API_BASE_URL, OLLAMA_MODEL
@@ -25,7 +27,6 @@ class OllamaConnector:
         if is_json_mode: payload["format"] = "json"
         headers = {"Content-Type": "application/json"}
         try:
-            # Increased timeout for potentially complex NLU or planning
             response = requests.post(self.api_generate_url, data=json.dumps(payload), headers=headers, timeout=300) 
             response.raise_for_status()
             return response.json()
@@ -33,13 +34,10 @@ class OllamaConnector:
             print(f"[OLLAMA TIMEOUT] Prompt: {prompt_text[:100]}...")
             return None
         except requests.exceptions.HTTPError as e:
-            # Attempt to get more info from response if available
             error_body = "N/A"
             if response is not None:
-                try:
-                    error_body = response.json() # Or response.text if not JSON
-                except json.JSONDecodeError:
-                    error_body = response.text[:200]
+                try: error_body = response.json()
+                except json.JSONDecodeError: error_body = response.text[:200]
             print(f"[OLLAMA HTTP ERROR] {e} - Response: {error_body}")
             return None
         except requests.exceptions.RequestException as e:
@@ -56,9 +54,9 @@ class OllamaConnector:
         if session_context:
             hints = []
             if session_context.get("last_referenced_file_path"): 
-                hints.append(f"last file: '{os.path.basename(session_context['last_referenced_file_path'])}'")
+                hints.append(f"last file: '{os.path.basename(session_context['last_referenced_file_path'])}'") # Uses os
             if session_context.get("last_folder_listed_path"): 
-                hints.append(f"last folder: '{os.path.basename(session_context['last_folder_listed_path'])}'")
+                hints.append(f"last folder: '{os.path.basename(session_context['last_folder_listed_path'])}'") # Uses os
             if session_context.get("last_search_results"): 
                 hints.append(f"last search found {len(session_context['last_search_results'])} items")
             if session_context.get("command_history") and session_context["command_history"]:
@@ -72,63 +70,57 @@ You are an expert AI assistant for file management, information retrieval, and t
 Your primary goal is to identify a SINGLE main action the user wants to perform and extract its necessary parameters.
 
 Available actions and their EXCLUSIVE parameters:
-- "summarize_file": User wants a summary of a specific file.
-    Params: "file_path" (string; path to the file, or "__FROM_CONTEXT__" if implied, or "__MISSING__" if not specified).
-- "ask_question_about_file": User is asking a question about a specific file or folder.
-    Params: "file_path" (string; path to file/folder, or "__FROM_CONTEXT__", or "__MISSING__"), "question_text" (string; the user's question).
-- "list_folder_contents": User wants to see the contents of a folder.
-    Params: "folder_path" (string; path to the folder, or "__FROM_CONTEXT__", or "__MISSING__").
-- "move_item": User wants to move a file or folder.
-    Params: "source_path" (string; current path of item, or "__MISSING__"), "destination_path" (string; new path/folder for item, or "__MISSING__").
-- "search_files": User wants to find files/folders based on criteria.
-    Params: "search_criteria" (string; e.g., "images", "PDFs about finance", "text files containing 'secret'"), "search_path" (string, optional; directory to search in, e.g., ".", "C:/Users/Downloads", or "__MISSING__" to prompt or use context).
-- "propose_and_execute_organization": User wants to organize files/folders.
-  Params: "target_path_or_context" (string; MUST be "__FROM_CONTEXT__" if referring to current/recent items like "these files", "this folder", or if no path is given after a list/search operation. Otherwise, specify the path like "my downloads folder"), "organization_goal" (string, optional, e.g., "by type", "by project", "general cleanup").
-- "show_activity_log": User wants to see recent activity.
-    Params: "count" (integer, optional, defaults to a small number like 5-10).
-- "redo_activity": User wants to re-run a previous action.
-    Params: "activity_identifier" (string; "last", an index number from log, or part of a timestamp).
-- "general_chat": For general conversation, greetings, or requests not matching other actions.
-    Params: "original_request" (string; the full user prompt).
-- "unknown": Request is unclear or unsupported.
-    Params: "original_request" (string), "error" (string, optional reason for unknown).
+- "summarize_file": User wants a summary of a specific file. Params: "file_path".
+- "ask_question_about_file": User is asking about a file/folder. Params: "file_path", "question_text".
+- "list_folder_contents": User wants to list folder contents. Params: "folder_path".
+- "move_item": User wants to move an item. Params: "source_path", "destination_path".
+- "search_files": User wants to find files/folders. Params: "search_criteria", "search_path" (optional).
+- "propose_and_execute_organization": User wants to organize. Params: "target_path_or_context", "organization_goal" (optional).
+- "show_activity_log": User wants to see activity. Params: "count" (optional).
+- "redo_activity": User wants to redo. Params: "activity_identifier".
+- "general_chat": General conversation. Params: "original_request".
+- "unknown": Request unclear. Params: "original_request", "error" (optional).
+
+Paths like "__FROM_CONTEXT__" or "__MISSING__" should be used if not explicitly stated or if implied by context.
+
+SUPER IMPORTANT RULE:
+If the user's request starts with "search" or "find" OR contains phrases like "search for", "find files", "look for files" AND specifies what to look for (e.g., "images", "text files", "documents containing 'report'"), the action MUST be "search_files".
+The "search_criteria" parameter is KEY for "search_files".
+Do NOT choose "summarize_file" or "ask_question_about_file" if the user clearly indicates a search action, even if a path is mentioned.
 
 IMPORTANT PARAMETER RULES:
-1.  Each user request should map to a SINGLE primary action.
-2.  The "summarize_file" action ONLY accepts a "file_path" parameter. It should NEVER have "search_criteria" or "search_path" in its parameters. If a user asks to search for a file and then summarize it, "search_files" is the primary action for this step. Summarizing a specific search result would be a follow-up command.
-3.  The "ask_question_about_file" action ONLY accepts "file_path" and "question_text". It should NEVER have "search_criteria" or "search_path" in its parameters.
-4.  The "search_files" action requires "search_criteria" and optionally "search_path". It does NOT take "file_path" as a parameter to define the search scope itself.
-5.  For "propose_and_execute_organization":
-    - Set "target_path_or_context" to "__FROM_CONTEXT__" if the user says "organize these files", "organize this folder", "clean up here", or makes a general organization request immediately after a 'list' or 'search' operation that populated the context.
-    - If an explicit path is given (e.g., "organize my Downloads folder"), use that path for "target_path_or_context".
-    - If "organization_goal" is not specified, use a generic goal like "general organization based on item names and types".
+1.  Single primary action per request.
+2.  "summarize_file" ONLY takes "file_path". NEVER "search_criteria" or "search_path".
+3.  "ask_question_about_file" ONLY takes "file_path" and "question_text". NEVER "search_criteria" or "search_path".
+4.  "search_files" requires "search_criteria" and optionally "search_path".
 
 {context_hint_str}
 User Request: "{user_prompt}"
 
-Respond ONLY with a valid JSON object. Do not add any commentary before or after the JSON.
+Respond ONLY with a valid JSON object.
 
-Example for "summarize C:/reports/annual.docx":
-{{
-  "action": "summarize_file",
-  "parameters": {{ "file_path": "C:/reports/annual.docx" }}
-}}
-
-Example for "search for pdfs in my documents folder containing 'budget 2024'":
+Example for "search images in C:/my_pictures":
 {{
   "action": "search_files",
   "parameters": {{
-    "search_criteria": "pdfs containing 'budget 2024'",
-    "search_path": "my documents folder"
+    "search_criteria": "images",
+    "search_path": "C:/my_pictures"
   }}
 }}
-
-Example for "organize these items by date" (after a 'list' or 'search' command):
+Example for "search images C:/my_pictures":
 {{
-  "action": "propose_and_execute_organization",
+  "action": "search_files",
   "parameters": {{
-    "target_path_or_context": "__FROM_CONTEXT__",
-    "organization_goal": "by date"
+    "search_criteria": "images",
+    "search_path": "C:/my_pictures"
+  }}
+}}
+Example for "find text files about 'budget'":
+{{
+  "action": "search_files",
+  "parameters": {{
+    "search_criteria": "text files about 'budget'",
+    "search_path": "__MISSING__"
   }}
 }}
 
@@ -144,36 +136,76 @@ Your JSON response:
                 
                 parsed_json = json.loads(json_string)
                 
-                # Programmatic validation to catch LLM confusion between summarize/ask and search
                 action = parsed_json.get("action")
                 params = parsed_json.get("parameters", {})
+                user_prompt_lower = user_prompt.lower()
 
-                if action in ["summarize_file", "ask_question_about_file"]:
-                    if "search_criteria" in params:
-                        # LLM is confused. It's likely a search request.
-                        new_search_params = {"search_criteria": params["search_criteria"]}
-                        if "search_path" in params:
-                            new_search_params["search_path"] = params["search_path"]
+                # 1. Check for misattributed 'search_criteria' by LLM (original check)
+                if action in ["summarize_file", "ask_question_about_file"] and "search_criteria" in params:
+                    new_search_params = {"search_criteria": params["search_criteria"]}
+                    if "search_path" in params: new_search_params["search_path"] = params["search_path"]
+                    elif action == "ask_question_about_file" and params.get("file_path") and params["file_path"] not in ["__MISSING__", "__FROM_CONTEXT__"]:
+                        new_search_params["search_path"] = params["file_path"] 
+                    else: new_search_params["search_path"] = "__MISSING__"
+                    
+                    correction_note = (f"NLU L1 Correction: LLM chose '{action}' but included 'search_criteria'. "
+                                       f"Re-interpreting as 'search_files'. Original LLM params: {params}. ")
+                    print(f"\n[NLU CORRECTION (L1 - Param Misattribution)]\n{correction_note}\nInput: {user_prompt[:100]}...\n")
+                    return {"action": "search_files", "parameters": new_search_params, "nlu_correction_note": correction_note}
+
+                # 2. REVISED CHECK: If LLM chose summarize/ask, but user_prompt strongly implies search
+                search_trigger_keywords = ["search for", "find files", "look for", "locate files", "search ", "find "]
+                original_prompt_is_searchy = any(keyword in user_prompt_lower for keyword in search_trigger_keywords)
+                
+                if not original_prompt_is_searchy:
+                    if user_prompt_lower.startswith("search ") or user_prompt_lower.startswith("find "):
+                        original_prompt_is_searchy = True
+                
+                if action in ["summarize_file", "ask_question_about_file"] and original_prompt_is_searchy:
+                    extracted_criteria = None
+                    extracted_path = None
+                    
+                    match_in = re.search(r"^(?:search|find)\s+(?:for\s+)?(.+?)\s+in\s+(['\"]?)(.+?)\2?$", user_prompt, re.IGNORECASE)
+                    if match_in:
+                        extracted_criteria = match_in.group(1).strip().rstrip("'\" ")
+                        extracted_path = match_in.group(3).strip().rstrip("'\" ")
+                    else:
+                        match_no_in = re.search(r"^(?:search|find)\s+(?:for\s+)?(.+?)\s+(['\"]?([A-Za-z]:\\(?:[^\"\\/:*?<>|]+\\)*[^\"\\/:*?<>|]*|/(?:[^/]+/)*[^/]*|~\S*|\.\S*)\2|(\S+))$", user_prompt, re.IGNORECASE)
+                        if match_no_in:
+                            extracted_criteria = match_no_in.group(1).strip().rstrip("'\" ")
+                            extracted_path = match_no_in.group(3) if match_no_in.group(3) else match_no_in.group(4)
+                            if extracted_path: extracted_path = extracted_path.strip().rstrip("'\" ")
+                        else: 
+                             match_simple = re.search(r"^(?:search|find)\s+(?:for\s+)?(.+)$", user_prompt, re.IGNORECASE)
+                             if match_simple:
+                                 extracted_criteria = match_simple.group(1).strip().rstrip("'\" ")
+
+                    final_search_params = {}
+                    correction_prefix = f"NLU L2 Correction: LLM chose '{action}' but user prompt ('{user_prompt_lower[:30]}...') implies search."
+
+                    if extracted_criteria:
+                        final_search_params["search_criteria"] = extracted_criteria
+                        if extracted_path:
+                            final_search_params["search_path"] = extracted_path
+                        elif params.get("file_path") and params["file_path"] not in ["__MISSING__", "__FROM_CONTEXT__"]:
+                            final_search_params["search_path"] = params["file_path"]
+                            correction_prefix += f" Used LLM's file_path ('{params['file_path']}') as search_path."
                         else:
-                            # Try to infer search_path from file_path if action was ask_question_about_file and file_path was a dir
-                            if action == "ask_question_about_file" and params.get("file_path") and params["file_path"] not in ["__MISSING__", "__FROM_CONTEXT__"]:
-                                # This is a heuristic; actual path checking would be better but complex here
-                                new_search_params["search_path"] = params["file_path"] 
-                            else:
-                                new_search_params["search_path"] = "__MISSING__"
+                            final_search_params["search_path"] = "__MISSING__"
                         
-                        correction_note = (f"LLM initially chose '{action}' but included 'search_criteria'. "
-                                           f"Re-interpreting as 'search_files'. Original LLM params: {params}. "
-                                           f"User prompt: {user_prompt[:100]}...")
-                        
-                        # Return the corrected action and parameters
-                        # Print to server console for debugging this NLU correction
-                        print(f"\n[NLU CORRECTION]\n{correction_note}\n") 
-                        return {
-                            "action": "search_files",
-                            "parameters": new_search_params,
-                            "nlu_correction_note": correction_note 
-                        }
+                        correction_note = f"{correction_prefix} Overriding to 'search_files'. Original LLM params: {params}."
+                        print(f"\n[NLU CORRECTION (L2 - Prompt Override, Regex Extracted)]\n{correction_note}\nInput: {user_prompt[:100]}...\nNew Params: {final_search_params}\n")
+                        return {"action": "search_files", "parameters": final_search_params, "nlu_correction_note": correction_note}
+                    
+                    fallback_search_path = params.get("file_path") if params.get("file_path") not in ["__MISSING__", "__FROM_CONTEXT__"] else "__MISSING__"
+                    correction_note = (f"NLU L2 Fallback: {correction_prefix} Regex extraction weak. "
+                                       f"Forcing 'search_files', using LLM's file_path ('{fallback_search_path}') as search_path, and prompting for criteria. Original LLM params: {params}.")
+                    print(f"\n[NLU CORRECTION (L2 - Fallback)]\n{correction_note}\nInput: {user_prompt[:100]}...\n")
+                    return {
+                        "action": "search_files",
+                        "parameters": {"search_criteria": "__MISSING__", "search_path": fallback_search_path},
+                        "nlu_correction_note": correction_note
+                    }
                 return parsed_json
             except json.JSONDecodeError:
                 return {"action": "unknown", "parameters": {"original_request": user_prompt, "error": f"LLM NLU JSON error. Raw: {json_string[:100]}"}}
@@ -194,6 +226,11 @@ Your JSON response:
         return False
 
     def generate_organization_plan_llm(self, items_list_str: str, user_goal_str: str, base_path_for_plan: str) -> (list | None):
+        # The path construction for examples uses os.path.join
+        example_images_folder = os.path.join(base_path_for_plan, "Images") # Uses os
+        example_photo_source = os.path.join(base_path_for_plan, "photo.jpg") # Uses os
+        example_photo_dest = os.path.join(example_images_folder, "photo.jpg") # Uses os
+
         planning_meta_prompt = f"""
 You are an AI expert in file organization. Given a list of items in a base path, and a user's goal, 
 generate a precise JSON list of actions to organize them. Paths in actions should be absolute.
@@ -212,15 +249,15 @@ Rules for the plan:
 1. Output ONLY a valid JSON array of action objects. No other text.
 2. All "path", "source", "destination" values MUST be absolute paths. Use the provided base path to construct them if items are listed relatively.
 3. Create necessary folders before moving items into them.
-4. If goal is "by type", create folders like "Images", "Documents" etc. (e.g. inside "{base_path_for_plan}/Organized_by_Type" or directly in base_path if appropriate).
+4. If goal is "by type", create folders like "Images", "Documents" etc. (e.g. inside "{os.path.join(base_path_for_plan, "Organized_by_Type")}" or directly in base_path if appropriate).
 5. Be conservative: if an item's organization is unclear or already seems fine, it's okay to not include an action for it.
 6. Ensure source and destination for MOVE_ITEM are different.
 7. If creating organizational subfolders, make their names descriptive of the organization goal (e.g., "ByType/Images", "Projects/AlphaProj").
 
 Example output format (ensure paths are absolute):
 [
-  {{"action_type": "CREATE_FOLDER", "path": "{os.path.join(base_path_for_plan, "Images")}"}},
-  {{"action_type": "MOVE_ITEM", "source": "{os.path.join(base_path_for_plan, "photo.jpg")}", "destination": "{os.path.join(base_path_for_plan, "Images", "photo.jpg")}"}}
+  {{"action_type": "CREATE_FOLDER", "path": "{example_images_folder}"}},
+  {{"action_type": "MOVE_ITEM", "source": "{example_photo_source}", "destination": "{example_photo_dest}"}}
 ]
 
 Your JSON plan:
@@ -235,7 +272,7 @@ Your JSON plan:
                 parsed_plan = json.loads(json_string)
                 if isinstance(parsed_plan, list):
                     return parsed_plan
-                else: # LLM returned valid JSON but not a list
+                else:
                     print(f"[OLLAMA WARNING] Plan generation returned non-list JSON: {json_string[:100]}")
                     return [] 
             except json.JSONDecodeError:

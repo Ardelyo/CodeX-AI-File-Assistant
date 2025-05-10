@@ -1,6 +1,5 @@
+
 requests>=2.25.0
 python-docx>=1.1.0
-rich>=13.0.0 # Or a newer version
-# For actual PDF parsing, you would add a library like:
-# PyMuPDF>=1.23.0
-# or pdfplumber>=0.10.0
+rich>=13.0.0
+PyMuPDF>=1.23.0 # For PDF parsing

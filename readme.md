@@ -32,7 +32,11 @@
   <img alt="Python Version" src="https://img.shields.io/badge/python-3.9+-4B8BBE.svg?style=for-the-badge&logo=python&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-22c55e.svg?style=for-the-badge&logo=opensourceinitiative&logoColor=white"> 
   <img alt="Status" src="https://img.shields.io/badge/status-beta%20(v1.8.0)-ff9800.svg?style=for-the-badge&logo=statuspage&logoColor=white">
+</p>
+<p align="center">
   <img alt="Built with AI" src="https://img.shields.io/badge/Built%20with-AI-8A2BE2.svg?style=for-the-badge&logo=openai&logoColor=white">
+  <img alt="Unix Series" src="https://img.shields.io/badge/Unix%20Series-Project%20by%20Ardelyo-9370DB.svg?style=for-the-badge&logo=linux&logoColor=white">
+  <img alt="Made in Indonesia" src="https://img.shields.io/badge/Made%20in-Indonesia%20%F0%9F%87%AE%F0%9F%87%A9-red.svg?style=for-the-badge&logoColor=white">
 </p>
 
 <div align="center">
@@ -53,9 +57,13 @@
 
 ## 🌟 Overview
 
+This project is proudly part of the **Unix Series**, a collection of projects by Ardellio Satria Anindito (Ardelyo). The series aims to demonstrate that dedicated individuals, leveraging creativity and modern tools like AI, can develop impactful and innovative solutions. It champions the collaborative potential of human ingenuity augmented by artificial intelligence, showing how these forces combined can make a big difference.
+
+**A Note on AI Usage:** Artificial intelligence in the Unix Series is utilized as a specific tool to enhance capabilities and constitutes a focused part of the development process. This series emphasizes AI as a collaborator, not a replacement, and does not support ideologies of job displacement or unchecked AI dominance.
+
 **CodeX AI File Assistant** is a sophisticated command-line utility engineered to revolutionize your interaction with the local file system. By harnessing the power of locally-run Large Language Models (LLMs) via Ollama, CodeX offers an intuitive, natural language interface for managing, understanding, and organizing your digital assets with unprecedented ease and privacy.
 
-This project represents a dedicated exploration into applied artificial intelligence and system utilities, developed with passion and perseverance by **Ardelyo Satria Anindito** during the 9th grade (2023-2025).
+This project represents a dedicated exploration into applied artificial intelligence and system utilities, developed with passion and perseverance by **Ardellio Satria Anindito** during the 9th grade (2023-2025).
 
 <div align="center">
   <pre>╚════════════════════════════ ⊹ ════════════════════════════╝</pre>
@@ -326,7 +334,7 @@ Please create an issue to discuss potential changes or features before submittin
 
 ## 👤 Creator
 
-This project, **CodeX AI File Assistant**, was conceived and developed by:
+This project, **CodeX AI File Assistant**, was conceived and developed in **Indonesia** by:
 
 <div align="center">
 <pre>
@@ -349,7 +357,7 @@ This project, **CodeX AI File Assistant**, was conceived and developed by:
 </pre>
 </div>
 
-This endeavor was undertaken with dedication and a passion for exploring the intersection of artificial intelligence and practical software utilities.
+This endeavor was undertaken with dedication and a passion for exploring the intersection of artificial intelligence and practical software utilities, as part of the **Unix Series**.
 
 <div align="center">
   <a href="https://github.com/Ardelyo">
@@ -413,6 +421,7 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 </div>
 
 <div align="center">
+  <p><em>A Unix Series Project by Ardelyo</em></p>
   <img src="https://img.shields.io/badge/%F0%9F%92%BB%20Made%20With%20Passion%20%26%20AI-8A2BE2?style=for-the-badge" alt="Made With Passion & AI">
 </div>
 

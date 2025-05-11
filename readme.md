@@ -1,14 +1,12 @@
 
-<p align="center">
-
-
+```
   ██████╗ ██████╗ ██████╗ ███████╗██╗  ██╗
  ██╔════╝██╔═══██╗██╔══██╗██╔════╝╚██╗██╔╝
- ██║     ██║   ██║██║  ██║█████╗   ╚███╔╝
- ██║     ██║   ██║██║  ██║██╔══╝   ██╔██╗
+ ██║     ██║   ██║██║  ██║█████╗   ╚███╔╝ 
+ ██║     ██║   ██║██║  ██║██╔══╝   ██╔██╗ 
  ╚██████╗╚██████╔╝██████╔╝███████╗██╔╝ ██╗
   ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝
-
+```
 </p>
 
 <h1 align="center">CodeX AI File Assistant</h1>
@@ -84,62 +82,54 @@ CodeX empowers users with a suite of intelligent capabilities:
 CodeX operates through a streamlined, intelligent workflow visually represented below:
 
 <div align="center">
-IGNORE_WHEN_COPYING_START
-content_copy
-download
-Use code with caution.
-IGNORE_WHEN_COPYING_END
-+---------------------------+
-             |      User Typed Input     |
-             | (e.g., "summarize doc.txt")|
-             +-------------+-------------+
-                           |
-                           v
-             +---------------------------+
-             |   Direct Parser Attempt   |
-             | (Regex for common commands)|
-             +-------------+-------------+
-                           |
-             No Match /    | Matched
-             Complex Query |
-                           v
-             +---------------------------+     +---------------------+
-             |    LLM NLU & Intent       | --> |   Session Context   |
-             | (Ollama: gemma3:1b etc.)  | <-- | (Last file, folder) |
-             +-------------+-------------+     +---------------------+
-                           |
-                           v
-             +---------------------------+
-             |   Action Dispatcher       |
-             | (Identified Action & Params)|
-             +-------------+-------------+
-                           |
-      +--------------------+--------------------+
-      |                    |                    |
-      v                    v                    v
-IGNORE_WHEN_COPYING_START
-content_copy
-download
-Use code with caution.
-IGNORE_WHEN_COPYING_END
 
-+-------------------+ +-------------------+ +----------------------+
-| File System Tools | | LLM Content | | LLM Org. Plan Gen. |
-| (Read, List, Move)| | (Summarize, Q&A) | | (or Python Heuristic)|
-+-------------------+ +-------------------+ +----------------------+
-| | | (Plan for Review)
-+--------------------+--------------------+
-|
-v
-+---------------------------+
-| Execute & Display |
-| (Rich CLI Output, Progress)|
-+-------------+-------------+
-|
-v
-+---------------------------+ +---------------------+
-| Activity Logger | --> | activity_log.jsonl |
-+---------------------------+ +---------------------+
+```
+                 +---------------------------+
+                 |      User Typed Input     |
+                 | (e.g., "summarize doc.txt")|
+                 +-------------+-------------+
+                               |
+                               v
+                 +---------------------------+
+                 |   Direct Parser Attempt   |
+                 | (Regex for common commands)|
+                 +-------------+-------------+
+                               |
+                 No Match /    | Matched
+                 Complex Query |
+                               v
+                 +---------------------------+     +---------------------+
+                 |    LLM NLU & Intent       | --> |   Session Context   |
+                 | (Ollama: gemma3:1b etc.)  | <-- | (Last file, folder) |
+                 +-------------+-------------+     +---------------------+
+                               |
+                               v
+                 +---------------------------+
+                 |   Action Dispatcher       |
+                 | (Identified Action & Params)|
+                 +-------------+-------------+
+                               |
+          +--------------------+--------------------+
+          |                    |                    |
+          v                    v                    v
++-------------------+  +-------------------+  +----------------------+
+| File System Tools |  |   LLM Content     |  | LLM Org. Plan Gen.   |
+| (Read, List, Move)|  | (Summarize, Q&A)  |  | (or Python Heuristic)|
++-------------------+  +-------------------+  +----------------------+
+          |                    |                    | (Plan for Review)
+          +--------------------+--------------------+
+                               |
+                               v
+                 +---------------------------+
+                 |   Execute & Display       |
+                 | (Rich CLI Output, Progress)|
+                 +-------------+-------------+
+                               |
+                               v
+                 +---------------------------+     +---------------------+
+                 |      Activity Logger      | --> | activity_log.jsonl  |
+                 +---------------------------+     +---------------------+
+```
 
 </div>
 
@@ -193,10 +183,9 @@ Follow these steps to get CodeX up and running:
 
 1.  **Clone the Repository:**
     ```bash
-    git clone https://github.com/ArdellioSaAn/CodeX-AI-File-Assistant.git # Example URL
+    git clone https://github.com/Ardelyo/CodeX-AI-File-Assistant.git # Replace with your actual repository URL
     cd CodeX-AI-File-Assistant
     ```
-    *(Please replace `ArdellioSaAn/CodeX-AI-File-Assistant.git` with your actual repository URL if different.)*
 
 2.  **Create a Python Virtual Environment (Recommended):**
     ```bash
@@ -291,31 +280,25 @@ Please create an issue to discuss potential changes or features before submittin
 This project, **CodeX AI File Assistant**, was conceived and developed by:
 
 <div align="center">
-IGNORE_WHEN_COPYING_START
-content_copy
-download
-Use code with caution.
-IGNORE_WHEN_COPYING_END
-#############################################
-#                                           #
-#       A R D E L L I O   S A T R I A       #
-#             A N I N D I T O             #
-#                                           #
-#             (9th Grade Student)           #
-#                (2023 - 2025)              #
-#                                           #
-#############################################
-IGNORE_WHEN_COPYING_START
-content_copy
-download
-Use code with caution.
-IGNORE_WHEN_COPYING_END
+
+```
+    #############################################
+    #                                           #
+    #      A R D E L L I O   S A T R I A      #
+    #             A N I N D I T O             #
+    #                                           #
+    #           (9th Grade Student)           #
+    #               (2023 - 2025)             #
+    #                                           #
+    #############################################
+```
+
 </div>
 
 This endeavor was undertaken with dedication and a passion for exploring the intersection of artificial intelligence and practical software utilities.
 
 *   Connect with Ardellio:
-    *   GitHub: [@ArdellioSaAn](https://github.com/ArdellioSaAn) *(Please verify this is your correct GitHub username)*
+    *   GitHub: [@Ardelyo](https://github.com/Ardelyo)
     *   *(Feel free to add other links like LinkedIn or a personal website if you have them)*
 
 <div align="center">
@@ -347,23 +330,3 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 <p align="center">
   Thank you for exploring CodeX AI File Assistant! Your feedback and contributions are appreciated.
 </p>
-IGNORE_WHEN_COPYING_START
-content_copy
-download
-Use code with caution.
-IGNORE_WHEN_COPYING_END
-
-Key Visual and ASCII Art Changes:
-
-Top "CODEX" Logo:
-
-The ASCII art at the very top of the README now exactly matches the APP_LOGO_TEXT from your main_cli.py. This ensures consistency.
-
-ASCII Section Separators:
-
-Instead of plain ---, I've used a more stylized separator:
-
-<div align="center">
-
-═══════════════════════════ ◆ ═══════════════════════════
-</div>

@@ -65,9 +65,12 @@ class OllamaConnector:
             context_summary_parts.append(f"- Last referenced file: {session_context['last_referenced_file_path']}")
         if session_context.get('last_folder_listed_path'):
             context_summary_parts.append(f"- Last listed folder: {session_context['last_folder_listed_path']}")
-        if session_context.get('last_search_results'):
+        if session_context.get('last_search_results'): # This could be useful for __PREVIOUS_ACTION_RESULT...
             context_summary_parts.append(f"- Last search produced {len(session_context['last_search_results'])} items.")
-        
+        if session_context.get('last_action_result'):
+            context_summary_parts.append(f"- Output of the immediate previous action step: {str(session_context['last_action_result'])[:150]}...")
+
+
         context_summary = "No specific session context available."
         if context_summary_parts:
             context_summary = "Current session context:\n" + "\n".join(context_summary_parts)
@@ -75,40 +78,51 @@ class OllamaConnector:
         system_prompt = f"""
 You are CodeX AI File Assistant, an expert in understanding user requests for file system operations.
 Your task is to analyze the user's input, considering the provided session context, and provide a structured JSON output.
+The output should be a list of actions to be performed sequentially.
 
 Always perform the following steps in your reasoning (which you will articulate in 'chain_of_thought'):
-1.  **Rephrase User's Goal:** Briefly state what you believe the user is trying to achieve.
-2.  **Identify Key Entities:** Extract potential file paths, folder paths, search terms, organizational goals, etc.
-3.  **Contextual Resolution:** Explicitly state how you are using (or not using) the provided session context to resolve ambiguities or infer missing information. For example, if the user says "this file," check 'last_referenced_file_path' or 'current_directory'.
-4.  **Path Inference/Assumption:** If a full path is not given, explain how you are deriving it (e.g., from current directory, context, or a common location like 'Downloads'). If a path is clearly relative (e.g. "./docs", "file.txt"), state that it should be resolved against the current working directory. Use placeholders like "__CURRENT_DIR__" or "__FROM_CONTEXT__" if the path is not explicit but implied by context. Use "__MISSING__" if a path is needed but genuinely not inferable.
-5.  **Action Determination:** Based on the above, determine the most appropriate single action from the list below.
-6.  **Parameter Finalization:** List the parameters required for that action. Path parameters should be the string provided by the user if explicit, or one of the placeholders if inferred.
-7.  **Ambiguity Check:** If, after all reasoning, a critical piece of information (especially a path for an action like move or summarize) is still missing or highly ambiguous, set 'clarification_needed' to true and formulate a specific question. Do NOT guess if confidence is low on critical items.
+1.  **Deconstruct User's Goal:** Break down the user's request into a sequence of one or more discrete file system operations or queries.
+2.  **For each operation in the sequence:**
+    a.  **Identify Key Entities:** Extract file paths, folder paths, search terms, questions, etc., relevant to this specific operation.
+    b.  **Contextual Resolution:** Explicitly state how you are using (or not using) the provided session context to resolve ambiguities or infer missing information for this operation. Consider 'current_directory', 'last_referenced_file_path', 'last_folder_listed_path', and 'last_action_result' (if chaining).
+    c.  **Path Inference/Assumption:** If a full path is not given, explain how you are deriving it. Use placeholders:
+        - `__CURRENT_DIR__`: For the current working directory.
+        - `__LAST_REFERENCED_FILE__`: For the last file explicitly mentioned or acted upon by the user prior to this multi-step command.
+        - `__LAST_LISTED_FOLDER__`: For the last folder whose contents were listed by the user prior to this multi-step command.
+        - `__PREVIOUS_ACTION_RESULT_PATH__`: If the current action depends on a single file/folder path output from the *immediately preceding* action in THIS sequence. (e.g., if prev action was 'list_folder_contents', this placeholder refers to the listed folder's path).
+        - `__PREVIOUS_ACTION_RESULT_FIRST_PATH__`: If the current action needs a single file/folder path from a list of items output by the *immediately preceding* action in THIS sequence (e.g., the path of the first search result).
+        - `__MISSING__`: If a path is needed but genuinely not inferable from user input, context, or previous steps.
+    d.  **Action Determination:** Determine the most appropriate single action from the list below for this operation.
+    e.  **Parameter Finalization:** List the parameters required for that action. Path parameters should be the string provided by the user if explicit, or one of the placeholders if inferred/chained.
+    f.  **Step Description:** Briefly explain the purpose of this specific action step.
+3.  **Overall Ambiguity Check:** If, after deconstruction, critical information for *any step* is missing or highly ambiguous (and not resolved by chaining or context), set 'clarification_needed' to true and formulate a specific question.
 
 Available actions and their parameters:
 - "summarize_file": Parameters: "file_path" (string).
 - "ask_question_about_file": Parameters: "file_path" (string), "question_text" (string).
-- "list_folder_contents": Parameters: "folder_path" (string, can be "__CURRENT_DIR__" or "__FROM_CONTEXT__").
+- "list_folder_contents": Parameters: "folder_path" (string, can be "__CURRENT_DIR__", "__LAST_LISTED_FOLDER__", or "__PREVIOUS_ACTION_RESULT_PATH__" if previous action yielded a folder path).
 - "move_item": Parameters: "source_path" (string), "destination_path" (string).
-- "search_files": Parameters: "search_criteria" (string), "search_path" (string, optional, can be "__CURRENT_DIR__" or "__FROM_CONTEXT__").
+- "search_files": Parameters: "search_criteria" (string), "search_path" (string, optional, can be "__CURRENT_DIR__", "__PREVIOUS_ACTION_RESULT_PATH__").
 - "propose_and_execute_organization": Parameters: "target_path_or_context" (string), "organization_goal" (string, optional).
 - "show_activity_log": Parameters: "count" (integer, optional).
 - "redo_activity": Parameters: "activity_identifier" (string).
 - "general_chat": Parameters: "original_request" (string).
-- "unknown": Parameters: "original_request" (string), "error_reason" (string).
+- "unknown": Parameters: "original_request" (string), "error_reason" (string). (Use this as a single action in the list if the entire request is un-interpretable)
 
 **OUTPUT FORMAT (Strict JSON):**
 You MUST output a single JSON object with the following fields:
--   `chain_of_thought`: (string) Your detailed step-by-step reasoning process. Use newline characters (\\n) for readability if needed.
--   `action`: (string) The single, most appropriate action identified.
--   `parameters`: (object) A JSON object containing parameters for the identified 'action'.
--   `clarification_needed`: (boolean) true if critical information is missing or highly ambiguous, otherwise false.
+-   `chain_of_thought`: (string) Your detailed overall reasoning process for deconstructing the request. Use newline characters (\\n) for readability.
+-   `actions`: (array of objects) A list of action objects. Each action object MUST contain:
+    -   `action_name`: (string) The action identified for this step.
+    -   `parameters`: (object) A JSON object containing parameters for this action.
+    -   `step_description`: (string) Brief explanation of this step's purpose.
+-   `clarification_needed`: (boolean) true if critical information is missing for any step, otherwise false.
 -   `suggested_question`: (string) If 'clarification_needed' is true, provide a concise, targeted question. Otherwise, an empty string or null.
--   `nlu_method`: (string) Set this to "llm_direct_nlu".
+-   `nlu_method`: (string) Set this to "llm_multi_action_nlu".
 
 **FEW-SHOT EXAMPLES:**
 ---
-Example 1:
+Example 1 (Single Action, Contextual):
 User Input: "summarize the report I just looked at"
 Session Context:
 - Current working directory: /user/projects
@@ -117,53 +131,98 @@ Session Context:
 Assistant JSON Output:
 ```json
 {{
-  "chain_of_thought": "1. User's Goal: Summarize a recently accessed file implicitly referred to as 'the report I just looked at'.\\n2. Key Entities: 'report', 'summarize', implicit reference.\\n3. Contextual Resolution: User said 'just looked at', so I will use 'Last referenced file' from context: /user/docs/Q3_financial_report.docx. This is an absolute path.\\n4. Path Inference: The path is directly from context.\\n5. Action Determination: The action is 'summarize_file'.\\n6. Parameter Finalization: file_path is /user/docs/Q3_financial_report.docx.\\n7. Ambiguity Check: No major ambiguity, path seems clear from context.",
-  "action": "summarize_file",
-  "parameters": {{
-    "file_path": "/user/docs/Q3_financial_report.docx"
-  }},
+  "chain_of_thought": "User's Goal: Summarize a recently accessed file.\\nDecomposition: Single action - summarize.\\nStep 1 Reasoning: User said 'just looked at', so using 'Last referenced file' from context: /user/docs/Q3_financial_report.docx. Action is 'summarize_file'. Parameters: file_path is __LAST_REFERENCED_FILE__ (which system will resolve to /user/docs/Q3_financial_report.docx). No ambiguity.",
+  "actions": [
+    {{
+      "action_name": "summarize_file",
+      "parameters": {{ "file_path": "__LAST_REFERENCED_FILE__" }},
+      "step_description": "Summarize the last referenced financial report."
+    }}
+  ],
   "clarification_needed": false,
   "suggested_question": "",
-  "nlu_method": "llm_direct_nlu"
+  "nlu_method": "llm_multi_action_nlu"
 }}
 ```
 ---
-Example 2:
-User Input: "find text files about 'project alpha' in my main dev folder"
+Example 2 (Multi-Action with Chaining):
+User Input: "list my downloads folder and then find any pdfs in there"
 Session Context:
-- Current working directory: /user/projects/project_beta
+- Current working directory: /user/home
 
 Assistant JSON Output:
 ```json
 {{
-  "chain_of_thought": "1. User's Goal: Search for text files containing 'project alpha' within a specific 'main dev folder'.\\n2. Key Entities: 'text files', 'project alpha', 'main dev folder'.\\n3. Contextual Resolution: 'main dev folder' is not explicitly in context. Current directory is '/user/projects/project_beta', which might not be the 'main dev folder'.\\n4. Path Inference: The path for 'main dev folder' is ambiguous. I cannot reliably guess it and it's not described as relative to CWD.\\n5. Action Determination: The core action seems to be 'search_files'.\\n6. Parameter Finalization: search_criteria is 'text files about \\'project alpha\\''. 'search_path' is '__MISSING__'.\\n7. Ambiguity Check: The location of 'main dev folder' is critical and ambiguous. Clarification is needed.",
-  "action": "search_files",
-  "parameters": {{
-    "search_criteria": "text files about 'project alpha'",
-    "search_path": "__MISSING__"
-  }},
+  "chain_of_thought": "User's Goal: First list downloads, then search for PDFs within that folder.\\nDecomposition: Two actions - list, then search.\\nStep 1 (List): List 'Downloads'. Path is inferred as '~/Downloads' relative to user's home or CWD. For this example, assume it's interpreted as a direct path or resolvable by the system. Action: 'list_folder_contents'.\\nStep 2 (Search): Search for 'pdfs'. The search path should be the folder path listed in Step 1. Using '__PREVIOUS_ACTION_RESULT_PATH__'. Action: 'search_files'.\\nNo major ambiguity.",
+  "actions": [
+    {{
+      "action_name": "list_folder_contents",
+      "parameters": {{ "folder_path": "~/Downloads" }},
+      "step_description": "List the contents of the user's Downloads folder. The output of this action (the path listed) will be used by the next step."
+    }},
+    {{
+      "action_name": "search_files",
+      "parameters": {{ "search_criteria": "pdfs", "search_path": "__PREVIOUS_ACTION_RESULT_PATH__" }},
+      "step_description": "Search for PDF files within the previously listed Downloads folder."
+    }}
+  ],
+  "clarification_needed": false,
+  "suggested_question": "",
+  "nlu_method": "llm_multi_action_nlu"
+}}
+```
+---
+Example 3 (Multi-Action, Search then Summarize Chained):
+User Input: "search for 'latest_earnings.docx' in my documents and then summarize it"
+Session Context:
+- Current working directory: /user/home
+
+Assistant JSON Output:
+```json
+{{
+  "chain_of_thought": "User's Goal: Search for a specific document, then summarize the found document.\\nDecomposition: Two actions - search, then summarize.\\nStep 1 (Search): Search for 'latest_earnings.docx' in 'documents'. Assuming 'documents' refers to '~/Documents'. Action: 'search_files'.\\nStep 2 (Summarize): Summarize the file found in Step 1. Using '__PREVIOUS_ACTION_RESULT_FIRST_PATH__' to get the path of the (hopefully single) search result. Action: 'summarize_file'.\\nNo major ambiguity.",
+  "actions": [
+    {{
+      "action_name": "search_files",
+      "parameters": {{ "search_criteria": "latest_earnings.docx", "search_path": "~/Documents" }},
+      "step_description": "Search for the file 'latest_earnings.docx' in the Documents folder. The first result's path will be used by the next step."
+    }},
+    {{
+      "action_name": "summarize_file",
+      "parameters": {{ "file_path": "__PREVIOUS_ACTION_RESULT_FIRST_PATH__" }},
+      "step_description": "Summarize the 'latest_earnings.docx' file found in the previous search step."
+    }}
+  ],
+  "clarification_needed": false,
+  "suggested_question": "",
+  "nlu_method": "llm_multi_action_nlu"
+}}
+```
+---
+Example 4 (Ambiguity requiring clarification):
+User Input: "organize them by date and then move project X files"
+Session Context:
+- Current working directory: /user/projects/project_alpha
+
+Assistant JSON Output:
+```json
+{{
+  "chain_of_thought": "User's Goal: Organize some items by date, then move specific project files.\\nDecomposition: Two actions - organize, then move.\\nStep 1 (Organize): 'them' is ambiguous. Context suggests 'current_directory'. Goal: 'by date'. Action: 'propose_and_execute_organization'.\\nStep 2 (Move): 'project X files' is ambiguous for source. Destination also unspecified. Action: 'move_item'.\\nOverall Ambiguity: Yes, Step 2 needs more info.",
+  "actions": [
+    {{
+      "action_name": "propose_and_execute_organization",
+      "parameters": {{ "target_path_or_context": "__CURRENT_DIR__", "organization_goal": "by date" }},
+      "step_description": "Organize items in the current directory by date."
+    }},
+    {{
+      "action_name": "move_item",
+      "parameters": {{ "source_path": "__MISSING__", "destination_path": "__MISSING__" }},
+      "step_description": "Move 'project X files'. Source and destination are unclear."
+    }}
+  ],
   "clarification_needed": true,
-  "suggested_question": "Which folder do you consider your 'main dev folder' for this search? Please provide a full path or path relative to your current directory.",
-  "nlu_method": "llm_direct_nlu"
-}}
-```
----
-Example 3:
-User Input: "list this directory"
-Session Context:
-- Current working directory: /user/documents/reports
-
-Assistant JSON Output:
-```json
-{{
-  "chain_of_thought": "1. User's Goal: List contents of the current directory.\\n2. Key Entities: 'this directory'.\\n3. Contextual Resolution: 'this directory' refers to the 'Current working directory' from context: /user/documents/reports.\\n4. Path Inference: Path is directly from context, so I will use '__CURRENT_DIR__'.\\n5. Action Determination: Action is 'list_folder_contents'.\\n6. Parameter Finalization: folder_path is '__CURRENT_DIR__'.\\n7. Ambiguity Check: No major ambiguity.",
-  "action": "list_folder_contents",
-  "parameters": {{
-    "folder_path": "__CURRENT_DIR__"
-  }},
-  "clarification_needed": false,
-  "suggested_question": "",
-  "nlu_method": "llm_direct_nlu"
+  "suggested_question": "For moving 'project X files': which files/folder are you referring to as the source for 'project X files', and where would you like to move them (destination path)?",
+  "nlu_method": "llm_multi_action_nlu"
 }}
 ```
 ---
@@ -173,35 +232,75 @@ END OF EXAMPLES.
 
         response_data = self._send_request_to_ollama(prompt_for_llm, is_json_mode=True)
 
+        default_error_response_base = {
+            "chain_of_thought": "Error: Initializing default error response.",
+            "actions": [{"action_name": "unknown", "parameters": {"original_request": user_input, "error_reason": "Initialization error"}, "step_description": "Error."}],
+            "clarification_needed": False, 
+            "suggested_question": "",
+        }
+
         if not response_data:
-            return {
-                "chain_of_thought": "Error: No response from LLM.",
-                "action": "unknown", "parameters": {"original_request": user_input, "error_reason": "No LLM NLU response."},
-                "clarification_needed": False, "suggested_question": "", "nlu_method": "llm_no_response"
-            }
+            err_resp = default_error_response_base.copy()
+            err_resp["chain_of_thought"] = "Error: No response from LLM."
+            err_resp["actions"][0]["parameters"]["error_reason"] = "No LLM NLU response."
+            err_resp["nlu_method"] = "llm_no_response"
+            return err_resp
 
         if "error_type" in response_data:
             error_message = response_data.get("message", "LLM NLU request failed due to an error.")
-            return {
-                "chain_of_thought": f"Error during NLU: {error_message}",
-                "action": "unknown", "parameters": {"original_request": user_input, "error_reason": error_message},
-                "clarification_needed": False, "suggested_question": "", "nlu_method": f"llm_{response_data.get('error_type', 'request_error')}"
-            }
+            err_resp = default_error_response_base.copy()
+            err_resp["chain_of_thought"] = f"Error during NLU: {error_message}"
+            err_resp["actions"][0]["parameters"]["error_reason"] = error_message
+            err_resp["nlu_method"] = f"llm_{response_data.get('error_type', 'request_error')}"
+            return err_resp
         
-        parsed_llm_json = response_data
-        required_keys = ["chain_of_thought", "action", "parameters", "clarification_needed", "suggested_question", "nlu_method"]
-        missing_keys = [key for key in required_keys if key not in parsed_llm_json]
+        parsed_llm_json = response_data # This is already the parsed JSON from the LLM's 'response' field
+        
+        required_top_level_keys = ["chain_of_thought", "actions", "clarification_needed", "suggested_question", "nlu_method"]
+        missing_top_level_keys = [key for key in required_top_level_keys if key not in parsed_llm_json]
 
-        if missing_keys:
-            error_detail = f"LLM NLU response missing required keys: {', '.join(missing_keys)}. Response: {str(parsed_llm_json)[:200]}"
-            return {
-                "chain_of_thought": f"Error: {error_detail}",
-                "action": "unknown", "parameters": {"original_request": user_input, "error_reason": error_detail},
-                "clarification_needed": False, "suggested_question": "", "nlu_method": "llm_incomplete_response"
-            }
-        
-        if "original_request" not in parsed_llm_json["parameters"]:
-            parsed_llm_json["parameters"]["original_request_for_action"] = user_input
+        if missing_top_level_keys:
+            error_detail = f"LLM NLU response missing required top-level keys: {', '.join(missing_top_level_keys)}. Response: {str(parsed_llm_json)[:200]}"
+            err_resp = default_error_response_base.copy()
+            err_resp["chain_of_thought"] = f"Error: {error_detail}"
+            err_resp["actions"][0]["parameters"]["error_reason"] = error_detail
+            err_resp["nlu_method"] = "llm_incomplete_response_top_level"
+            return err_resp
+
+        if not isinstance(parsed_llm_json.get("actions"), list) or not parsed_llm_json.get("actions"):
+            error_detail = f"'actions' field is not a list or is empty. Response: {str(parsed_llm_json)[:200]}"
+            err_resp = default_error_response_base.copy()
+            err_resp["chain_of_thought"] = f"Error: {error_detail}"
+            err_resp["actions"][0]["parameters"]["error_reason"] = error_detail
+            err_resp["nlu_method"] = "llm_invalid_actions_field"
+            return err_resp
+
+        required_action_keys = ["action_name", "parameters", "step_description"]
+        for i, action_item in enumerate(parsed_llm_json["actions"]):
+            if not isinstance(action_item, dict):
+                error_detail = f"Action item at index {i} is not a dictionary. Response: {str(parsed_llm_json)[:200]}"
+                err_resp = default_error_response_base.copy()
+                err_resp["chain_of_thought"] = f"Error: {error_detail}"
+                err_resp["actions"][0]["parameters"]["error_reason"] = error_detail
+                err_resp["nlu_method"] = "llm_invalid_action_item_type"
+                return err_resp
+            
+            missing_action_keys = [key for key in required_action_keys if key not in action_item]
+            if missing_action_keys:
+                error_detail = f"Action item at index {i} missing keys: {', '.join(missing_action_keys)}. Response: {str(parsed_llm_json)[:200]}"
+                err_resp = default_error_response_base.copy()
+                err_resp["chain_of_thought"] = f"Error: {error_detail}"
+                err_resp["actions"][0]["parameters"]["error_reason"] = error_detail
+                err_resp["nlu_method"] = "llm_incomplete_action_item"
+                return err_resp
+            if not isinstance(action_item.get("parameters"), dict):
+                error_detail = f"Action item at index {i} has 'parameters' field that is not a dictionary. Response: {str(parsed_llm_json)[:200]}"
+                err_resp = default_error_response_base.copy()
+                err_resp["chain_of_thought"] = f"Error: {error_detail}"
+                err_resp["actions"][0]["parameters"]["error_reason"] = error_detail
+                err_resp["nlu_method"] = "llm_invalid_action_parameters_type"
+                return err_resp
+
 
         return parsed_llm_json
 

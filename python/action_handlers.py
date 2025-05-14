@@ -1,434 +1,705 @@
+# python/action_handlers.py
 
 import os
-import json
-import datetime
-import re # For handle_propose_and_execute_organization's fallback logic
+import shutil
+import time
+import json # For loading activity log if needed for redo
+
+# PDF and DOCX parsing
+try:
+    import fitz  # PyMuPDF
+    PYMUPDF_AVAILABLE = True
+except ImportError:
+    PYMUPDF_AVAILABLE = False
+
+try:
+    from docx import Document
+    PYTHON_DOCX_AVAILABLE = True
+except ImportError:
+    PYTHON_DOCX_AVAILABLE = False
+
+# Local project imports
+from . import cli_ui
+from . import cli_constants
+from . import path_resolver
+from . import fs_utils # Assuming you have fs_utils for file operations like list_folder_contents_simple
+import activity_logger # For logging results
+
 from rich.table import Table
+from rich.text import Text
 from rich.live import Live
 from rich.spinner import Spinner
-from rich.progress import Progress
-from rich.text import Text
-from rich.padding import Padding
+from rich.panel import Panel
 from rich.box import ROUNDED
-from rich.prompt import Confirm # For move_item and redo_activity, propose_organization
 
-# Local/project imports
-from ollama_connector import OllamaConnector
-from file_utils import get_file_content, move_item as fu_move_item, list_folder_contents as fu_list_folder_contents, search_files_recursive as fu_search_files_recursive
-from activity_logger import log_action, get_recent_activities, get_activity_by_partial_id_or_index, MAX_LOG_ENTRIES_SIMPLE_RETRIEVAL
-from .fs_utils import is_path_within_base
-from . import session_manager # To update session context
-from .cli_ui import console, ICONS, print_error, print_success, print_warning, print_info, print_panel_message
-from . import nlu_processor # For handle_redo_activity -> process_nlu_result
+# --- Configuration for Summarization ---
+MAX_CONTENT_LENGTH_FOR_SUMMARY = 20000  # Characters, adjust based on your LLM and typical file sizes
+MAX_ITEMS_TO_DISPLAY_IN_LIST = 50 # For list_folder_contents
 
-# This map will be populated at the end of the file
-_ACTION_HANDLERS_MAP = {}
+# === Helper for Content Extraction ===
+def _extract_file_content(resolved_path: str, file_extension: str) -> tuple[str, str, str | None]:
+    """
+    Extracts content from a file based on its extension.
+    Returns: (content_text, content_source_description, error_message_if_any)
+    """
+    file_content = ""
+    content_source = "unknown"
+    error_message = None
 
-# --- Action Handlers ---
-def handle_summarize_file(connector: OllamaConnector, parameters: dict):
-    abs_filepath = parameters.get("file_path")
-    if not abs_filepath or not os.path.isfile(abs_filepath):
-        print_error(f"Cannot summarize: Path '[filepath]{abs_filepath}[/filepath]' is not a valid file.", "Summarize Error")
-        log_action("summarize_file", parameters, "failure", f"Invalid or missing file path: {abs_filepath}")
-        return
-    console.print(f"{ICONS['file']} Attempting to summarize: [filepath]{abs_filepath}[/filepath]")
-    session_manager.update_session_context("last_referenced_file_path", abs_filepath)
-    content = get_file_content(abs_filepath, console)
-    if content:
-        if content.startswith("Error extracting text from PDF"):
-            print_warning(content, "PDF Summarization Issue")
-            log_action("summarize_file", parameters, "partial_success", f"PDF extraction error: {content.split(':', 1)[-1].strip()}")
-            return
-        summary = connector.invoke_llm_for_content("Summarize this file content comprehensively and concisely, focusing on key information and main points:", content)
-        if summary.startswith("Error: LLM content generation failed"): print_error(summary, "LLM Summarization Failed")
-        else: print_panel_message("LLM Summary", summary, "info", ICONS["summary"])
-        log_action("summarize_file", parameters, "success", f"Summary length: {len(summary)}")
-    else: log_action("summarize_file", parameters, "failure", "Could not read file")
-
-def handle_ask_question(connector: OllamaConnector, parameters: dict):
-    abs_filepath = parameters.get("file_path")
-    question = parameters.get("question_text", "")
-    if not abs_filepath or not os.path.exists(abs_filepath):
-        print_error(f"Q&A Error: Path '[filepath]{abs_filepath}[/filepath]' does not exist.")
-        log_action("ask_question", parameters, "failure", f"Path missing for Q&A: {abs_filepath}")
-        return
-    if not question:
-        print_warning("No question for Q&A.") # Should be caught by nlu_processor ideally
-        log_action("ask_question", parameters, "failure", "No question text")
-        return
-    
-    item_name_display = os.path.basename(abs_filepath)
-    log_action_name = "ask_question_about_folder" if os.path.isdir(abs_filepath) else "ask_question_about_file"
-
-    if os.path.isdir(abs_filepath):
-        session_manager.update_session_context("last_folder_listed_path", abs_filepath)
-        session_manager.update_session_context("last_referenced_file_path", None)
-        console.print(f"{ICONS['folder']} Analyzing folder: [filepath]{abs_filepath}[/filepath]\n{ICONS['question']} Question: [italic white]{question}[/italic white]")
-        items = fu_list_folder_contents(abs_filepath, console) or []
-        ctx = f"Folder '{item_name_display}' "
-        if not items: ctx += "is empty."
-        else: ctx += "contains:\n" + "\n".join([f"- {i.get('name','N/A')} ({i.get('type','N/A')})" for i in items[:15]])
-        if len(items)>15: ctx+=f"\n...and {len(items)-15} more."
-        
-        eff_q = question
-        if question.lower() in ["what about it?","analyze this", "tell me about it", "what do you think about it?", "your thoughts?"]:
-            eff_q = f"Analyze folder '{item_name_display}'. What patterns or interesting aspects do you observe? Any organization opportunities?"
-        
-        ans = connector.invoke_llm_for_content(f"Answer based on folder info: {eff_q}", ctx)
-        if ans.startswith("Error: LLM content generation failed"): print_error(ans,"LLM Folder Analysis Failed")
-        else: print_panel_message("Folder Analysis",ans,"info",ICONS["answer"])
-        log_action(log_action_name,parameters,"success",f"Analysis len:{len(ans)}")
-
-    elif os.path.isfile(abs_filepath):
-        session_manager.update_session_context("last_referenced_file_path",abs_filepath)
-        console.print(f"{ICONS['file']} Asking about file: [filepath]{abs_filepath}[/filepath]\n{ICONS['question']} Question: [italic white]{question}[/italic white]")
-        content = get_file_content(abs_filepath,console)
-        if content:
-            if content.startswith("Error extracting text from PDF"):
-                print_warning(content, "PDF Q&A Issue")
-                log_action(log_action_name, parameters, "partial_success", f"PDF extraction error: {content.split(':', 1)[-1].strip()}")
-                return
-            ans = connector.invoke_llm_for_content(f"Answer based on file content: {question}",content)
-            if ans.startswith("Error: LLM content generation failed"): print_error(ans,"LLM Answer Failed")
-            else: print_panel_message("LLM Answer",ans,"info",ICONS["answer"])
-            log_action(log_action_name,parameters,"success",f"Ans len:{len(ans)}")
-        else: log_action(log_action_name,parameters,"failure","Cannot read file")
-    else: print_error(f"Path '[filepath]{abs_filepath}[/filepath]' is neither a file nor a directory.", "Q&A Path Error")
-
-
-def handle_list_folder(parameters: dict): # No connector needed
-    abs_folder_path = parameters.get("folder_path")
-    if not abs_folder_path or not os.path.isdir(abs_folder_path):
-        print_error(f"List Error: Path '[filepath]{abs_folder_path}[/filepath]' invalid.")
-        log_action("list_folder_contents", parameters, "failure", "Invalid folder path for list")
-        return
-    console.print(f"{ICONS['folder']} Listing: [filepath]{abs_folder_path}[/filepath]")
-    session_manager.update_session_context("last_folder_listed_path", abs_folder_path)
-    session_manager.update_session_context("last_referenced_file_path", None)
-    contents = fu_list_folder_contents(abs_folder_path, console)
-    if contents is not None:
-        if not contents:
-            print_info(f"Folder '[filepath]{os.path.basename(abs_folder_path)}[/filepath]' empty.","Folder Empty")
-            session_manager.update_session_context("last_search_results",[])
-        else:
-            tbl=Table(title=f"{ICONS['folder']} Contents of {os.path.basename(abs_folder_path)} ({len(contents)})",box=ROUNDED,expand=True, header_style="table.header")
-            tbl.add_column("Icon",width=4,justify="center"); tbl.add_column("Idx",width=5,justify="right"); tbl.add_column("Name",style="filepath",overflow="fold"); tbl.add_column("Type",width=10)
-            for i,item in enumerate(contents): tbl.add_row(ICONS["folder"] if item['type']=="folder" else ICONS["file"],str(i+1),item['name'],item['type'])
-            console.print(tbl)
-            session_manager.update_session_context("last_search_results",contents)
-        log_action("list_folder_contents",parameters,"success",f"Listed {len(contents) if contents else 0}")
-    else: log_action("list_folder_contents",parameters,"failure","file_utils list error")
-
-def handle_move_item(parameters: dict): # No connector needed
-    abs_source_path = parameters.get("source_path")
-    abs_destination_path = parameters.get("destination_path")
-    if not abs_source_path or not os.path.exists(abs_source_path):
-        print_error(f"Move Error: Src '[filepath]{abs_source_path}[/filepath]' missing.")
-        log_action("move_item", parameters, "failure", "Source missing for move")
-        return
-    if not abs_destination_path:
-        print_error("Move Error: Dest missing.")
-        log_action("move_item", parameters, "failure", "Destination missing for move")
-        return
-    print_panel_message("Confirm Move",f"FROM:[filepath]{abs_source_path}[/filepath]\nTO:  [filepath]{abs_destination_path}[/filepath]","warning",ICONS["confirm"])
-    if Confirm.ask(Text.from_markup(f"{ICONS['confirm']} Proceed?"),default=False, console=console):
-        if fu_move_item(abs_source_path,abs_destination_path,console):
-            print_success(f"Moved '[filepath]{os.path.basename(abs_source_path)}[/filepath]' to '[filepath]{abs_destination_path}[/filepath]'.")
-            log_action("move_item",parameters,"success")
-            session_manager.update_session_context("last_referenced_file_path",None)
-            session_manager.update_session_context("last_folder_listed_path",None)
-            session_manager.update_session_context("last_search_results",[])
-        else: log_action("move_item",parameters,"failure","file_utils move error")
-    else: print_info("Move cancelled."); log_action("move_item",parameters,"cancelled")
-
-def handle_search_files(connector: OllamaConnector, parameters: dict):
-    search_criteria = parameters.get("search_criteria")
-    abs_search_path = parameters.get("search_path")
-    if not search_criteria:
-        print_error("Search Error: No criteria.")
-        log_action("search_files", parameters, "failure", "No criteria for search")
-        return
-    if not abs_search_path or not os.path.isdir(abs_search_path):
-        print_error(f"Search Error: Path '[filepath]{abs_search_path}[/filepath]' invalid.")
-        log_action("search_files", parameters, "failure", "Invalid search path")
-        return
-    console.print(f"{ICONS['search']} Searching in [filepath]{abs_search_path}[/filepath] for: [highlight]'{search_criteria}'[/highlight]")
-    found = fu_search_files_recursive(abs_search_path,search_criteria,connector,console)
-    if not found: print_info(f"No matches for [highlight]'{search_criteria}'[/highlight]","Search Results")
-    else:
-        print_success(f"Found {len(found)} matching [highlight]'{search_criteria}'[/highlight]:","Search Results")
-        tbl=Table(title=f"{ICONS['search']} Results",box=ROUNDED,expand=True, header_style="table.header")
-        tbl.add_column("Icon",width=4,justify="center"); tbl.add_column("Idx",width=5,justify="right"); tbl.add_column("Name",style="filepath",overflow="fold"); tbl.add_column("Path",style="dim_text",overflow="fold")
-        for i,item in enumerate(found): tbl.add_row(ICONS["folder"] if item['type']=="folder" else ICONS["file"],str(i+1),item['name'],item['path'])
-        console.print(tbl)
-    session_manager.update_session_context("last_search_results",found)
-    session_manager.update_session_context("last_folder_listed_path",abs_search_path)
-    log_action("search_files",parameters,"success",f"Found {len(found)}")
-
-def handle_general_chat(connector: OllamaConnector, parameters: dict):
-    req = parameters.get("original_request","...")
-    spinner=f"{ICONS['thinking']} [spinner_style]Thinking: '{req[:30]}...'[/spinner_style]"
-    with Live(Spinner("bouncingBar",text=spinner),console=console,transient=True): resp = connector.invoke_llm_for_content(req)
-    if resp.startswith("Error: LLM content generation failed"): print_error(resp,"LLM Chat Failed")
-    else: print_panel_message("CodeX Response",resp,"info",ICONS["answer"])
-    log_action("general_chat",parameters,"success",f"Resp len:{len(resp)}")
-
-def handle_show_activity_log(parameters: dict): # No connector needed
-    count_param = parameters.get("count"); default_log_count = MAX_LOG_ENTRIES_SIMPLE_RETRIEVAL//2
     try:
-        count = int(count_param) if count_param is not None else default_log_count
-        if not (0<count<=MAX_LOG_ENTRIES_SIMPLE_RETRIEVAL): count = default_log_count
-    except (ValueError,TypeError): count = default_log_count
-    activities = get_recent_activities(count)
-    if not activities: print_info("Activity log empty.","Activity Log"); return
-    tbl=Table(title=f"{ICONS['log']} Recent Activity (Last {len(activities)})",box=ROUNDED, header_style="table.header")
-    tbl.add_column("TS",style="dim_text",width=22); tbl.add_column("Action",style="bold",width=25); tbl.add_column("Params",style="dim_text",overflow="fold",max_width=40); tbl.add_column("Status",width=12)
-    for act in activities:
-        ts_str = act.get('timestamp',''); ts = datetime.datetime.fromisoformat(ts_str.replace("Z","+00:00")).strftime('%y-%m-%d %H:%M:%S') if ts_str else 'N/A'
-        stat=act.get('status','?'); scolor="green" if stat=="success" else "yellow" if stat in ["partial_success","cancelled","initiated","plan_proposed", "user_cancelled_organization", "python_plan_generated"] else "red"
-        pdict=act.get('parameters',{}); pstr=", ".join([f"[highlight]{k}[/highlight]:'{str(v)[:20]}{'...' if len(str(v))>20 else ''}'" for k,v in pdict.items()]) or "N/A"
-        tbl.add_row(ts,act.get('action','N/A'),Text.from_markup(pstr),f"[{scolor}]{stat}[/{scolor}]")
-    console.print(tbl); log_action("show_activity_log",{"req_c":count_param,"disp_c":len(activities)},"success")
-
-def handle_redo_activity(connector: OllamaConnector, parameters: dict):
-    act_id = parameters.get("activity_identifier")
-    if not act_id: print_warning("No activity ID for redo."); log_action("redo_activity", parameters, "failure", "No activity ID"); return
-    
-    act_to_redo = get_activity_by_partial_id_or_index(act_id, console) # console from cli_ui
-    if not act_to_redo: return
-
-    action_perform = act_to_redo.get("action"); params_use = act_to_redo.get("parameters",{})
-    print_panel_message("Confirm Redo",f"Action:[highlight]{action_perform}[/highlight]\nParams:[dim_text]{json.dumps(params_use,indent=1)}[/dim_text]","warning",ICONS["redo"])
-    
-    if Confirm.ask(Text.from_markup(f"{ICONS['confirm']} Confirm?"),default=True, console=console):
-        console.print(f"{ICONS['execute']} Redoing: [highlight]{action_perform}[/highlight]")
-        log_action("redo_activity",{**parameters,"orig_action":action_perform,"orig_params":params_use},"initiated")
+        if file_extension == ".pdf":
+            if not PYMUPDF_AVAILABLE:
+                error_message = "PyMuPDF library not found. Cannot parse .pdf files. Please run: pip install pymupdf"
+                return "", "pdf_parsing_skipped_dependency", error_message
+            content_source = "pdf_parsed"
+            doc = fitz.open(resolved_path)
+            for page_num in range(len(doc)):
+                page = doc.load_page(page_num)
+                file_content += page.get_text("text") # "text" for plain text
+            doc.close()
+            if not file_content.strip():
+                error_message = f"Extracted no text from PDF: {os.path.basename(resolved_path)}. The PDF might be image-based or protected."
         
-        current_session_ctx = session_manager.get_session_context()
-        reproc_action, reproc_params, _ = nlu_processor.process_nlu_result(
-            {"action":action_perform,"parameters":params_use},
-            f"Redoing command: {action_perform}", # Synthetic user input for processing
-            current_session_ctx, # Pass current session context
-            connector
+        elif file_extension == ".docx":
+            if not PYTHON_DOCX_AVAILABLE:
+                error_message = "python-docx library not found. Cannot parse .docx files. Please run: pip install python-docx"
+                return "", "docx_parsing_skipped_dependency", error_message
+            content_source = "docx_parsed"
+            doc = Document(resolved_path)
+            for para in doc.paragraphs:
+                file_content += para.text + "\n"
+            if not file_content.strip():
+                error_message = f"Extracted no text from DOCX: {os.path.basename(resolved_path)}."
+
+        elif file_extension in [".txt", ".md", ".py", ".json", ".html", ".css", ".js", ".log", ".csv", ".xml", ".yaml", ".yml", ".sh", ".bat", ".ps1", ".c", ".cpp", ".java", ".go", ".rb", ".php"]:
+            content_source = f"{file_extension}_text_file_read"
+            with open(resolved_path, "r", encoding="utf-8", errors="ignore") as f:
+                file_content = f.read()
+            if not file_content.strip():
+                error_message = f"File {os.path.basename(resolved_path)} appears to be empty."
+        else:
+            content_source = "unsupported_type_no_extraction"
+            error_message = f"File type '{file_extension}' is not directly supported for content extraction."
+            # For unsupported types, content will remain empty. The LLM can be informed.
+
+    except fitz.fitz.FitxError as e_pdf: # More specific PyMuPDF error
+        error_message = f"Error processing PDF file {os.path.basename(resolved_path)}: {e_pdf}. It might be corrupted or password-protected."
+        content_source = "pdf_processing_error"
+    except Exception as e_extraction:
+        error_message = f"An unexpected error occurred during content extraction of {os.path.basename(resolved_path)}: {str(e_extraction)}"
+        content_source = "extraction_error"
+
+    if error_message:
+        cli_ui.print_warning(error_message, "Content Extraction Issue")
+        
+    return file_content, content_source, error_message
+
+
+# === Action Handlers ===
+
+def handle_summarize_file(connector, parameters: dict):
+    """Handles the summarization of a file."""
+    activity_logger.log_action("summarize_file", parameters, "pending_execution", "Attempting to summarize file.")
+    
+    file_path_param = parameters.get("file_path")
+    if not file_path_param:
+        cli_ui.print_error("File path is missing for summarization.", "Summarization Error")
+        activity_logger.update_last_activity_status("failure", "Missing file_path parameter.")
+        return
+
+    resolved_path = path_resolver.resolve_path(file_path_param, cli_ui)
+    if not resolved_path or not os.path.isfile(resolved_path):
+        cli_ui.print_error(f"File not found or is not a file: {resolved_path or file_path_param}", "File Error")
+        activity_logger.update_last_activity_status("failure", f"File not found or not a file: {resolved_path or file_path_param}")
+        return
+
+    file_extension = os.path.splitext(resolved_path)[1].lower()
+    cli_ui.console.print(f"{cli_constants.ICONS.get('file','📄')} Attempting to summarize: [filepath]{resolved_path}[/filepath]")
+
+    file_content, content_source, extraction_error = _extract_file_content(resolved_path, file_extension)
+
+    if not file_content.strip() and extraction_error: # If extraction failed and produced an error message
+        # LLM will be informed about the failure.
+        llm_input_content = f"I attempted to summarize the file at path '{resolved_path}'. It is a '{file_extension}' file. However, I encountered an issue extracting its content. The error was: '{extraction_error}'. Can you provide a generic statement or acknowledge this based on the filename and type, or ask the user for more information if needed?"
+    elif not file_content.strip(): # If file is empty or unsupported and no specific error was generated by _extract_file_content
+        llm_input_content = f"The file at path '{resolved_path}' (type: '{file_extension}') appears to be empty or its content could not be read for direct summarization. Please provide a general comment or ask for clarification."
+    else:
+        llm_input_content = file_content
+
+    if len(llm_input_content) > MAX_CONTENT_LENGTH_FOR_SUMMARY:
+        llm_input_content = llm_input_content[:MAX_CONTENT_LENGTH_FOR_SUMMARY] + "\n\n[Content truncated due to length]"
+        cli_ui.print_info("Content was truncated for LLM summary due to length.", "Content Truncation")
+
+    summary_spinner_text = f"[spinner_style] {cli_constants.ICONS.get('thinking','🤔')} Asking LLM to summarize '{os.path.basename(resolved_path)}' ({content_source})...[/spinner_style]"
+    with Live(Spinner("dots", text=summary_spinner_text), console=cli_ui.console, transient=True, refresh_per_second=10):
+        summary_result = connector.get_summary(llm_input_content, resolved_path) # Pass resolved_path for context
+
+    if summary_result and summary_result.get("summary_text"):
+        cli_ui.print_panel_message("LLM Summary", summary_result["summary_text"], "info", cli_constants.ICONS.get('summary','📝'))
+        activity_logger.update_last_activity_status("success", "Summary generated.", result_data={"summary_preview": summary_result["summary_text"][:200]+"..."})
+    elif summary_result and summary_result.get("error"):
+        cli_ui.print_error(f"LLM could not generate summary: {summary_result['error']}", "Summarization Failed")
+        activity_logger.update_last_activity_status("failure", f"LLM error during summary: {summary_result['error']}")
+    else:
+        cli_ui.print_error("LLM did not return a valid summary or error.", "Summarization Failed")
+        activity_logger.update_last_activity_status("failure", "LLM no valid response for summary")
+
+
+def handle_ask_question_about_file(connector, parameters: dict):
+    """Handles asking a question about a file's content."""
+    activity_logger.log_action("ask_question_about_file", parameters, "pending_execution", "Attempting to answer question about file.")
+
+    file_path_param = parameters.get("file_path")
+    question = parameters.get("question")
+
+    if not file_path_param or not question:
+        cli_ui.print_error("File path or question is missing.", "Q&A Error")
+        activity_logger.update_last_activity_status("failure", "Missing file_path or question.")
+        return
+
+    resolved_path = path_resolver.resolve_path(file_path_param, cli_ui)
+    if not resolved_path or not os.path.isfile(resolved_path):
+        cli_ui.print_error(f"File not found or is not a file: {resolved_path or file_path_param}", "File Error")
+        activity_logger.update_last_activity_status("failure", f"File not found for Q&A: {resolved_path or file_path_param}")
+        return
+
+    file_extension = os.path.splitext(resolved_path)[1].lower()
+    cli_ui.console.print(f"{cli_constants.ICONS.get('question','❓')} Finding answer for '{question[:50]}...' in [filepath]{resolved_path}[/filepath]")
+
+    file_content, content_source, extraction_error = _extract_file_content(resolved_path, file_extension)
+    
+    if not file_content.strip() and extraction_error:
+        llm_input_content = f"I was asked the question: '{question}' about the file at path '{resolved_path}' (type: '{file_extension}'). I encountered an error trying to read its content: '{extraction_error}'. Please respond appropriately, perhaps indicating you cannot answer without the content."
+    elif not file_content.strip():
+        llm_input_content = f"I was asked the question: '{question}' about the file at path '{resolved_path}' (type: '{file_extension}'). The file appears to be empty or its content could not be read. Please respond appropriately."
+    else:
+        llm_input_content = file_content
+    
+    # Content length truncation for Q&A might also be needed, similar to summarization
+    if len(llm_input_content) > MAX_CONTENT_LENGTH_FOR_SUMMARY: # Using same constant for now
+        llm_input_content = llm_input_content[:MAX_CONTENT_LENGTH_FOR_SUMMARY] + "\n\n[Content truncated due to length]"
+        cli_ui.print_info("Content was truncated for LLM Q&A due to length.", "Content Truncation")
+
+    qna_spinner_text = f"[spinner_style] {cli_constants.ICONS.get('thinking','🤔')} Asking LLM about '{os.path.basename(resolved_path)}' ({content_source})...[/spinner_style]"
+    with Live(Spinner("dots", text=qna_spinner_text), console=cli_ui.console, transient=True, refresh_per_second=10):
+        answer_result = connector.ask_question_about_text(llm_input_content, question, resolved_path)
+
+    if answer_result and answer_result.get("answer_text"):
+        cli_ui.print_panel_message("LLM Answer", answer_result["answer_text"], "info", cli_constants.ICONS.get('answer','💡'))
+        activity_logger.update_last_activity_status("success", "Answer generated.", result_data={"answer_preview": answer_result["answer_text"][:200]+"..."})
+    elif answer_result and answer_result.get("error"):
+        cli_ui.print_error(f"LLM could not provide an answer: {answer_result['error']}", "Q&A Failed")
+        activity_logger.update_last_activity_status("failure", f"LLM error during Q&A: {answer_result['error']}")
+    else:
+        cli_ui.print_error("LLM did not return a valid answer or error.", "Q&A Failed")
+        activity_logger.update_last_activity_status("failure", "LLM no valid response for Q&A")
+
+
+def handle_list_folder_contents(parameters: dict):
+    """Lists contents of a specified folder."""
+    activity_logger.log_action("list_folder_contents", parameters, "pending_execution", "Attempting to list folder contents.")
+    folder_path_param = parameters.get("folder_path")
+
+    resolved_path = path_resolver.resolve_path(folder_path_param, cli_ui, expect_dir=True)
+    if not resolved_path or not os.path.isdir(resolved_path):
+        cli_ui.print_error(f"Folder not found or is not a directory: {resolved_path or folder_path_param}", "Directory Error")
+        activity_logger.update_last_activity_status("failure", f"Folder not found for list: {resolved_path or folder_path_param}")
+        return
+
+    try:
+        cli_ui.console.print(f"{cli_constants.ICONS.get('folder','📁')} Contents of [filepath]{resolved_path}[/filepath]:")
+        items, error = fs_utils.list_folder_contents_simple(resolved_path) # Assuming fs_utils has this
+
+        if error:
+            cli_ui.print_error(f"Error listing folder: {error}", "Listing Error")
+            activity_logger.update_last_activity_status("failure", f"Error listing folder: {error}")
+            return
+        
+        if not items:
+            cli_ui.print_info("The folder is empty.", "Empty Folder")
+            activity_logger.update_last_activity_status("success", "Folder listed (empty).", result_data={"path": resolved_path, "count": 0})
+            # Update session context about the listed folder (even if empty)
+            from . import session_manager # Local import to avoid circularity if session_manager imports action_handlers
+            session_manager.update_session_context("last_folder_listed_path", resolved_path)
+            session_manager.update_session_context("last_listed_items", [])
+            return
+
+        table = Table(title=None, show_header=True, header_style="table.header", box=ROUNDED)
+        table.add_column("#", style="dim", width=4, justify="right")
+        table.add_column("Name", style="dim_text", min_width=20, overflow="fold")
+        table.add_column("Type", width=10)
+        table.add_column("Size", justify="right", width=12)
+        table.add_column("Modified", width=20)
+
+        display_count = 0
+        for i, item in enumerate(items):
+            if display_count >= MAX_ITEMS_TO_DISPLAY_IN_LIST and len(items) > MAX_ITEMS_TO_DISPLAY_IN_LIST + 5 : # Show 'more items' message if significantly truncated
+                remaining_items = len(items) - display_count
+                table.add_row("...", f"... and {remaining_items} more items ...", "", "", "")
+                break
+            
+            item_type_icon = cli_constants.ICONS.get('folder','📁') if item['type'] == 'directory' else cli_constants.ICONS.get('file','📄')
+            
+            # Apply styling to filename if it's a directory
+            name_style = "filepath" if item['type'] == 'directory' else "dim_text" # Example style
+            name_display = Text(f"{item_type_icon} {item['name']}", style=name_style)
+
+            table.add_row(
+                str(i + 1),
+                name_display,
+                item['type'].capitalize(),
+                item['size_readable'],
+                item['modified_readable']
+            )
+            display_count += 1
+        
+        cli_ui.console.print(table)
+        activity_logger.update_last_activity_status("success", f"Listed {len(items)} items.", result_data={"path": resolved_path, "count": len(items)})
+        
+        # Update session context
+        from . import session_manager # Local import
+        session_manager.update_session_context("last_folder_listed_path", resolved_path)
+        session_manager.update_session_context("last_listed_items", items) # Store full list for context
+
+    except Exception as e:
+        cli_ui.print_error(f"An unexpected error occurred while listing folder: {e}", "Listing Error")
+        cli_ui.console.print_exception(max_frames=2)
+        activity_logger.update_last_activity_status("failure", f"Unexpected listing error: {e}")
+
+
+def handle_search_files(connector, parameters: dict):
+    """Searches for files based on criteria (name, type, or LLM-assisted content)."""
+    activity_logger.log_action("search_files", parameters, "pending_execution", "Attempting to search files.")
+    search_criteria = parameters.get("search_criteria", "").strip()
+    search_path_param = parameters.get("search_path")
+    # search_type = parameters.get("search_type", "name") # e.g., 'name', 'type', 'content' - NLU should determine this
+
+    resolved_path = path_resolver.resolve_path(search_path_param, cli_ui, expect_dir=True)
+    if not resolved_path or not os.path.isdir(resolved_path):
+        cli_ui.print_error(f"Search path not found or is not a directory: {resolved_path or search_path_param}", "Search Path Error")
+        activity_logger.update_last_activity_status("failure", f"Search path not found: {resolved_path or search_path_param}")
+        return
+
+    if not search_criteria or search_criteria == "__MISSING__":
+        cli_ui.print_error("Search criteria are missing.", "Search Error")
+        activity_logger.update_last_activity_status("failure", "Missing search criteria.")
+        return
+
+    cli_ui.console.print(f"{cli_constants.ICONS.get('search','🔍')} Searching in [filepath]{resolved_path}[/filepath] for: '[highlight]{search_criteria}[/highlight]'")
+    
+    # This is a simplified search. A real implementation would be more complex:
+    # - Decide if it's name, type, or content search.
+    # - For content search, iterate files, extract text (like in summarize), then ask LLM if text matches criteria.
+    # - For now, let's simulate a basic name search.
+    
+    found_items = []
+    search_spinner_text = f"[spinner_style] {cli_constants.ICONS.get('thinking','🤔')} Searching files...[/spinner_style]"
+
+    with Live(Spinner("dots", text=search_spinner_text), console=cli_ui.console, transient=True, refresh_per_second=10):
+        time.sleep(0.1) # Simulate work
+        # Actual recursive search logic using os.walk or fs_utils
+        # Example: items = fs_utils.search_files_recursive(resolved_path, search_criteria, search_type)
+        # For this stub, let's just do a simple name check in the top directory
+        for entry in os.scandir(resolved_path):
+            if search_criteria.lower() in entry.name.lower():
+                stat = entry.stat()
+                found_items.append({
+                    "name": entry.name,
+                    "path": entry.path,
+                    "type": "directory" if entry.is_dir() else "file",
+                    "size_bytes": stat.st_size,
+                    "size_readable": fs_utils.bytes_to_readable(stat.st_size),
+                    "modified_timestamp": stat.st_mtime,
+                    "modified_readable": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(stat.st_mtime))
+                })
+        # This is a very basic search. A proper search would be recursive and might involve LLM for content.
+        # For a more advanced search, you'd call a specific function in fs_utils or even involve the LLM.
+
+    if not found_items:
+        cli_ui.print_info(f"No items found matching '[highlight]{search_criteria}[/highlight]' in [filepath]{resolved_path}[/filepath].", "Search Complete")
+        activity_logger.update_last_activity_status("success", "Search complete (no results).", result_data={"path": resolved_path, "criteria": search_criteria, "count": 0})
+        from . import session_manager # Local import
+        session_manager.update_session_context("last_search_results", [])
+        return
+
+    cli_ui.print_success(f"Found {len(found_items)} item(s) matching [highlight]'{search_criteria}'[/highlight]:", "Search Results")
+    
+    table = Table(title=None, show_header=True, header_style="table.header", box=ROUNDED)
+    table.add_column("#", style="dim", width=4, justify="right")
+    table.add_column("Name", style="dim_text", min_width=30, overflow="fold")
+    table.add_column("Path", style="filepath", min_width=40, overflow="fold") # Show full path for search results
+    table.add_column("Type", width=10)
+
+    display_count = 0
+    for i, item in enumerate(found_items):
+        if display_count >= MAX_ITEMS_TO_DISPLAY_IN_LIST and len(found_items) > MAX_ITEMS_TO_DISPLAY_IN_LIST + 5:
+            remaining_items = len(found_items) - display_count
+            table.add_row("...", f"... and {remaining_items} more items ...", "", "")
+            break
+
+        item_type_icon = cli_constants.ICONS.get('folder','📁') if item['type'] == 'directory' else cli_constants.ICONS.get('file','📄')
+        name_display = Text(f"{item_type_icon} {item['name']}")
+        path_display = Text(item['path'], style="filepath") # It's useful to see the full path in search
+
+        table.add_row(
+            str(i + 1),
+            name_display,
+            path_display,
+            item['type'].capitalize()
         )
+        display_count +=1
 
-        re_handler = _ACTION_HANDLERS_MAP.get(reproc_action) # Use internal map
+    cli_ui.console.print(table)
+    activity_logger.update_last_activity_status("success", f"Search found {len(found_items)} items.", result_data={"path": resolved_path, "criteria": search_criteria, "count": len(found_items)})
+    
+    from . import session_manager # Local import
+    session_manager.update_session_context("last_search_results", found_items)
 
-        if re_handler:
-            if reproc_action == "user_cancelled_organization":
-                print_info(f"Organization redo involving '{action_perform}' was pre-cancelled during parameter processing.")
-                # Log already handled by process_nlu_result if it returns this action
-            elif reproc_action == action_perform: # Action remained the same after re-processing
-                try:
-                    if reproc_action in ["summarize_file","ask_question_about_file","search_files","propose_and_execute_organization","general_chat","redo_activity"]:
-                        re_handler(connector,reproc_params)
-                    else:
-                        re_handler(reproc_params)
-                except Exception as e:
-                    print_error(f"Error redoing '{reproc_action}': {e}","Redo Error")
-                    console.print_exception(show_locals=False, max_frames=2) # Use cli_ui.console
-            else: # Action changed during re-processing (e.g. bad path, prompted for new)
-                print_error(f"Redo action '{action_perform}' changed to '{reproc_action}' during re-processing. Aborted to prevent unexpected behavior.","Redo Error")
-        elif reproc_action == "unknown" and "error" in reproc_params: # nlu_processor returned unknown
-             print_error(f"Could not re-process parameters for redo of '{action_perform}': {reproc_params['error']}", "Redo Error")
+
+def handle_move_item(parameters: dict):
+    """Moves a file or folder."""
+    activity_logger.log_action("move_item", parameters, "pending_execution", "Attempting to move item.")
+    source_path_param = parameters.get("source_path")
+    destination_path_param = parameters.get("destination_path")
+
+    if not source_path_param or not destination_path_param:
+        cli_ui.print_error("Source or destination path is missing.", "Move Error")
+        activity_logger.update_last_activity_status("failure", "Missing source or destination path for move.")
+        return
+
+    resolved_source = path_resolver.resolve_path(source_path_param, cli_ui, check_exists=True) # Source must exist
+    if not resolved_source: # resolve_path prints its own error if check_exists fails
+        activity_logger.update_last_activity_status("failure", f"Source path for move not found or invalid: {source_path_param}")
+        return
+
+    # For destination, we want the absolute path, but it might not exist yet (if it's a new filename within an existing dir)
+    # Or it could be just a directory path.
+    # path_resolver needs a flag to handle "destination" type paths.
+    # For simplicity, let's assume destination_path_param is either an existing dir or a full new path.
+    
+    # Create a more robust destination resolver if needed.
+    # This is a simplified destination logic:
+    resolved_dest_parent = os.path.dirname(path_resolver.resolve_path(destination_path_param, cli_ui, check_exists=False))
+    if not os.path.exists(resolved_dest_parent) or not os.path.isdir(resolved_dest_parent):
+         # Try to see if destination_path_param itself is an existing directory
+        potential_dest_dir = path_resolver.resolve_path(destination_path_param, cli_ui, check_exists=False)
+        if os.path.isdir(potential_dest_dir):
+            # User provided a directory, so we'll move the source *into* it
+            final_destination_path = os.path.join(potential_dest_dir, os.path.basename(resolved_source))
         else:
-            print_error(f"Action '{reproc_action}' not directly redoable or handler missing after re-processing.","Redo Error")
+            cli_ui.print_error(f"Destination directory does not exist: {resolved_dest_parent or destination_path_param}", "Move Error")
+            activity_logger.update_last_activity_status("failure", f"Destination directory for move does not exist: {resolved_dest_parent or destination_path_param}")
+            return
     else:
-        print_info("Redo cancelled."); log_action("redo_activity",parameters,"cancelled")
+        # User provided a full path (potentially with a new name for the source)
+        final_destination_path = path_resolver.resolve_path(destination_path_param, cli_ui, check_exists=False)
 
 
-def handle_propose_and_execute_organization(connector: OllamaConnector, parameters: dict):
-    abs_base_analysis_path = parameters.get("target_path_or_context")
-    organization_goal = parameters.get("organization_goal")
-    python_generated_plan_used = False
+    if os.path.exists(final_destination_path):
+        overwrite_confirm = cli_ui.ask_question_prompt(
+            f"Destination '[filepath]{final_destination_path}[/filepath]' already exists. Overwrite? (yes/no)"
+        )
+        if overwrite_confirm.lower() not in ["yes", "y"]:
+            cli_ui.print_info("Move operation cancelled by user (overwrite denied).", "Move Cancelled")
+            activity_logger.update_last_activity_status("user_cancelled", "Move cancelled due to existing destination.")
+            return
+        # If overwriting a directory, it's more complex (e.g., shutil.rmtree then move).
+        # For simplicity, shutil.move handles file overwrite but might error on dir overwrite.
+        if os.path.isdir(final_destination_path) and os.path.isfile(resolved_source):
+             cli_ui.print_error(f"Cannot overwrite directory '[filepath]{final_destination_path}[/filepath]' with a file.", "Move Error")
+             activity_logger.update_last_activity_status("failure", "Cannot overwrite directory with file.")
+             return
+        if os.path.isfile(final_destination_path) and os.path.isdir(resolved_source):
+             cli_ui.print_error(f"Cannot overwrite file '[filepath]{final_destination_path}[/filepath]' with a directory.", "Move Error")
+             activity_logger.update_last_activity_status("failure", "Cannot overwrite file with directory.")
+             return
 
-    if not abs_base_analysis_path or not os.path.isdir(abs_base_analysis_path):
-        print_error(f"Org Error: Target '[filepath]{abs_base_analysis_path}[/filepath]' invalid or not a directory.")
-        log_action("propose_and_execute_organization", parameters, "failure", "Invalid target for org")
+
+    move_confirm_q = f"Confirm moving [filepath]{resolved_source}[/filepath] to [filepath]{final_destination_path}[/filepath]? (yes/no)"
+    confirmation = cli_ui.ask_question_prompt(move_confirm_q)
+
+    if confirmation.lower() not in ["yes", "y"]:
+        cli_ui.print_info("Move operation cancelled by user.", "Move Cancelled")
+        activity_logger.update_last_activity_status("user_cancelled", "User cancelled move confirmation.")
         return
 
-    src_desc=f"folder '[filepath]{os.path.basename(abs_base_analysis_path)}[/filepath]'"
-    goal_display_text = organization_goal or "general organization"
-    console.print(Padding(f"{ICONS['thinking']} Analyzing {src_desc} for organization plan...\nGoal: '[highlight]{goal_display_text}[/highlight]'",(1,0)))
+    try:
+        cli_ui.console.print(f"{cli_constants.ICONS.get('move','➡️')} Moving [filepath]{resolved_source}[/filepath] to [filepath]{final_destination_path}[/filepath]...")
+        shutil.move(resolved_source, final_destination_path)
+        cli_ui.print_success(f"Successfully moved item to [filepath]{final_destination_path}[/filepath].", "Move Complete")
+        activity_logger.update_last_activity_status("success", "Item moved successfully.", result_data={"source": resolved_source, "destination": final_destination_path})
+    except Exception as e:
+        cli_ui.print_error(f"Failed to move item: {e}", "Move Error")
+        cli_ui.console.print_exception(max_frames=2)
+        activity_logger.update_last_activity_status("failure", f"Error during shutil.move: {e}")
+
+
+def handle_propose_and_execute_organization(connector, parameters: dict):
+    """Proposes an organization plan for a folder and allows user to execute it."""
+    activity_logger.log_action("propose_and_execute_organization", parameters, "pending_execution", "Attempting to organize folder.")
     
-    items_in_folder=fu_list_folder_contents(abs_base_analysis_path,console) or []
-    if not items_in_folder:
-        print_info(f"No items in {src_desc} to organize.","Org Status")
-        log_action("propose_and_execute_organization", parameters, "failure", "No items for org")
+    target_path_param = parameters.get("target_path_or_context")
+    organization_goal = parameters.get("organization_goal", "Organize files logically") # Default goal
+
+    resolved_path = path_resolver.resolve_path(target_path_param, cli_ui, expect_dir=True)
+    if not resolved_path or not os.path.isdir(resolved_path):
+        cli_ui.print_error(f"Target folder not found or is not a directory: {resolved_path or target_path_param}", "Organization Error")
+        activity_logger.update_last_activity_status("failure", f"Target folder for organization not found: {resolved_path or target_path_param}")
         return
 
-    item_summary_list_for_llm = []
-    for item_data in items_in_folder[:50]: # Limit for LLM context
-        relative_item_path = os.path.relpath(item_data['path'], abs_base_analysis_path)
-        item_summary_list_for_llm.append(f"- \"{relative_item_path}\" (type: {item_data['type']})")
-    
-    item_summary_llm_str = "\n".join(item_summary_list_for_llm)
-    if len(items_in_folder) > 50:
-        item_summary_llm_str += f"\n...and {len(items_in_folder)-50} more items."
+    cli_ui.console.print(f"{cli_constants.ICONS.get('plan','📋')} Analyzing folder '[filepath]{resolved_path}[/filepath]' for organization plan...\nGoal: [highlight]{organization_goal}[/highlight]")
 
-    spinner_text=f"{ICONS['thinking']} [spinner_style]LLM generating organization plan...[/spinner_style]"
-    with Live(Spinner("bouncingBar",text=spinner_text),console=console,transient=True):
-        plan_json_actions = connector.generate_organization_plan_llm(item_summary_llm_str, organization_goal, abs_base_analysis_path)
+    # Get a summary of current contents (simple list for now, could be more detailed)
+    current_items_simple, _ = fs_utils.list_folder_contents_simple(resolved_path, max_depth=0) # Just top level for summary
+    current_contents_summary_parts = [f"{item['name']} ({item['type']})" for item in current_items_simple[:10]] # Summary of first 10 items
+    if len(current_items_simple) > 10:
+        current_contents_summary_parts.append(f"...and {len(current_items_simple)-10} more items.")
+    current_contents_summary_text = f"Current folder '{os.path.basename(resolved_path)}' contains: " + ", ".join(current_contents_summary_parts)
+    if not current_items_simple:
+        current_contents_summary_text = f"Current folder '{os.path.basename(resolved_path)}' is empty."
 
-    if plan_json_actions is None:
-        print_error("LLM failed to generate a plan or the plan was malformed. Please try rephrasing your goal or check Ollama logs.", "Plan Generation Failed")
-        log_action("propose_and_execute_organization", parameters, "failure", "LLM plan generation failed or malformed")
-        return
-    
-    if not isinstance(plan_json_actions, list):
-        print_error(f"LLM plan was not a list as expected. Received type: {type(plan_json_actions)}. Cannot proceed.", "Plan Structure Error")
-        log_action("propose_and_execute_organization", parameters, "failure", f"LLM plan not a list: {type(plan_json_actions)}")
-        return
 
-    normalized_goal_for_fallback = (organization_goal or "").lower().strip()
-    name_based_heuristic_goals = ["by name", "the names", "by first letter", "alphabetical", "alphabetically by name"]
-    if not plan_json_actions and normalized_goal_for_fallback in name_based_heuristic_goals:
-        python_generated_plan_used = True
-        print_panel_message("AI Plan Fallback", 
-                            f"LLM did not propose a specific plan for goal '[highlight]{goal_display_text}[/highlight]'.\nAttempting standard first-letter organization heuristic.", 
-                            "info", ICONS["info"])
+    plan_spinner_text = f"[spinner_style] {cli_constants.ICONS.get('thinking','🤔')} Asking LLM to generate organization plan...[/spinner_style]"
+    plan_json = None
+    with Live(Spinner("dots", text=plan_spinner_text), console=cli_ui.console, transient=True, refresh_per_second=10):
+        plan_result = connector.generate_organization_plan(resolved_path, organization_goal, current_contents_summary_text)
+        # Expected plan_result: {"plan_steps": [{"action": "create_folder", "path": "subfolder_name"}, {"action": "move", "source": "file.txt", "destination": "subfolder_name/file.txt"}], "explanation": "..."} or {"error": "..."}
         
-        generated_heuristic_plan = []
-        created_folders_for_heuristic_plan = set()
-        for item_data in items_in_folder:
-            if item_data['type'] == 'file':
-                item_name = item_data['name']
-                first_char = item_name[0].upper() if item_name else "_"
-                subfolder_name = "0-9_files" if first_char.isdigit() else f"{first_char}_files" if first_char.isalpha() else "Symbols_files"
-                abs_subfolder_path = os.path.join(abs_base_analysis_path, subfolder_name)
-                
-                if abs_subfolder_path not in created_folders_for_heuristic_plan:
-                    generated_heuristic_plan.append({"action_type": "CREATE_FOLDER", "path": abs_subfolder_path})
-                    created_folders_for_heuristic_plan.add(abs_subfolder_path)
-                
-                source_path = item_data['path']
-                destination_path = os.path.join(abs_subfolder_path, item_name)
-                if source_path != destination_path :
-                    generated_heuristic_plan.append({"action_type": "MOVE_ITEM", "source": source_path, "destination": destination_path})
-        plan_json_actions = generated_heuristic_plan
-        log_action("propose_and_execute_organization", {**parameters, "fallback_heuristic_used": True}, "python_plan_generated", f"Python generated {len(plan_json_actions)} actions for '{normalized_goal_for_fallback}'")
-
-    if not plan_json_actions:
-        empty_plan_message = (f"The AI analyzed the folder for the goal '[highlight]{goal_display_text}[/highlight]' "
-                              f"but did not propose any specific actions.\nThis might be because:\n"
-                              f"  - The items are already organized according to this goal.\n"
-                              f"  - The goal was too ambiguous for the AI/heuristic to form a clear plan.\n"
-                              f"  - There were too few items to apply the chosen organization strategy effectively.\n"
-                              f"  - The AI determined no changes were beneficial based on its 'be conservative' rule.")
-        print_info(empty_plan_message, "No Actions Proposed")
-        log_action("propose_and_execute_organization", parameters, "success", "No actions proposed (LLM or heuristic)")
+        if plan_result and plan_result.get("plan_steps"):
+            plan_json = plan_result # Use the whole result which might include explanation
+        elif plan_result and plan_result.get("error"):
+            cli_ui.print_error(f"LLM failed to generate a plan: {plan_result['error']}", "Plan Generation Failed")
+            activity_logger.update_last_activity_status("failure", f"LLM plan generation error: {plan_result['error']}")
+            return
+        else: # Fallback to heuristic if LLM fails or returns unusable plan
+            cli_ui.print_warning("LLM failed to generate a structured plan. Attempting heuristic organization by type.", "LLM Plan Failed")
+            # Heuristic: organize by file extension into subfolders
+            heuristic_plan = fs_utils.generate_heuristic_organization_plan(resolved_path, "by_type")
+            if heuristic_plan and heuristic_plan.get("plan_steps"):
+                plan_json = heuristic_plan
+                cli_ui.print_info("Generated a heuristic plan to organize by file type.", "Heuristic Plan")
+            else:
+                cli_ui.print_error("LLM and heuristic plan generation both failed.", "Plan Generation Failed")
+                activity_logger.update_last_activity_status("failure", "LLM and heuristic plan generation failed.")
+                return
+    
+    if not plan_json or not plan_json.get("plan_steps"):
+        cli_ui.print_error("No valid organization plan could be generated.", "Plan Generation Failed")
+        activity_logger.update_last_activity_status("failure", "No valid plan steps generated.")
         return
 
-    plan_title = f"{ICONS['plan']} Proposed Organization Plan" + (" (Standard Heuristic)" if python_generated_plan_used else "")
-    tbl=Table(title=plan_title, box=ROUNDED, header_style="table.header", show_lines=True)
-    tbl.add_column("Icon",width=4,justify="center"); tbl.add_column("Step",justify="right",width=5); tbl.add_column("Action",width=15); tbl.add_column("Details",overflow="fold"); tbl.add_column("Status", width=15)
-    
-    valid_actions_to_execute=[]; invalid_actions_found=False
-    for i, action_data in enumerate(plan_json_actions):
-        action_type = action_data.get("action_type")
-        details_str = ""; is_action_valid = True; action_status_msg="[green]Valid[/green]"; icon="❓"
+    plan_steps = plan_json.get("plan_steps", [])
+    explanation = plan_json.get("explanation", "No detailed explanation provided for this plan.")
 
-        if not isinstance(action_data, dict):
-            details_str=f"[danger]Invalid action format (not a dict)[/danger]"; is_action_valid=False; action_status_msg="[danger]Invalid Format[/danger]"
-        elif action_type == "CREATE_FOLDER":
-            icon=ICONS["create_folder"]
-            folder_path = action_data.get("path")
-            if not (folder_path and isinstance(folder_path, str) and os.path.isabs(folder_path)):
-                details_str=f"Path: [danger]{folder_path or 'MISSING'}[/] (Must be absolute)"; is_action_valid=False; action_status_msg="[danger]Invalid Path[/danger]"
-            elif not is_path_within_base(folder_path, abs_base_analysis_path): # fs_utils.is_path_within_base
-                details_str=f"Path: [filepath]{folder_path}[/] [danger](Outside target folder scope)[/danger]"; is_action_valid=False; action_status_msg="[danger]Out of Scope[/danger]"
-            else: details_str=f"Path: [filepath]{folder_path}[/filepath]"
-        elif action_type == "MOVE_ITEM":
-            icon=ICONS["move"]
-            source_path = action_data.get("source")
-            destination_path = action_data.get("destination")
-            if not (source_path and isinstance(source_path, str) and os.path.isabs(source_path) and \
-                    destination_path and isinstance(destination_path, str) and os.path.isabs(destination_path)):
-                details_str=f"Source: [danger]{source_path or 'MISSING'}[/]\nDest:   [danger]{destination_path or 'MISSING'}[/] (Must be absolute)"; is_action_valid=False; action_status_msg="[danger]Invalid Paths[/danger]"
-            elif source_path == destination_path:
-                details_str=f"From: [filepath]{source_path}[/filepath]\nTo:   [filepath]{destination_path}[/] ([dim_text]Item already in place[/dim_text])"; is_action_valid=False; action_status_msg="[dim_text]No Change[/dim_text]"
-            elif not is_path_within_base(source_path, abs_base_analysis_path) or \
-                 not is_path_within_base(destination_path, abs_base_analysis_path):
-                s_scope = "[green]OK[/green]" if is_path_within_base(source_path, abs_base_analysis_path) else "[danger]OUT[/danger]"
-                d_scope = "[green]OK[/green]" if is_path_within_base(destination_path, abs_base_analysis_path) else "[danger]OUT[/danger]"
-                details_str=f"Source ({s_scope}): [filepath]{source_path}[/]\nDest   ({d_scope}): [filepath]{destination_path}[/] [danger](Path(s) out of scope)[/danger]"; is_action_valid=False; action_status_msg="[danger]Out of Scope[/danger]"
-            elif not os.path.exists(source_path):
-                 details_str=f"Source: [filepath]{source_path}[/] [warning](Does not exist)[/warning]"; is_action_valid=False; action_status_msg="[warning]Src Missing[/warning]"
-            else: details_str=f"From: [filepath]{source_path}[/filepath]\nTo:   [filepath]{destination_path}[/filepath]"
+    cli_ui.print_info(f"LLM Plan Explanation: {explanation}", "Organization Plan")
+    
+    cli_ui.console.print("\nProposed Plan Steps:", style="bold")
+    if not plan_steps:
+        cli_ui.print_info("The proposed plan has no steps.", "Empty Plan")
+        activity_logger.update_last_activity_status("success", "Plan generated with no steps.")
+        return
+
+    table = Table(title="Organization Steps", box=ROUNDED, show_lines=True)
+    table.add_column("#", style="dim")
+    table.add_column("Action", style="bold cyan")
+    table.add_column("Details")
+
+    for i, step in enumerate(plan_steps):
+        action = step.get("action")
+        details_parts = []
+        if action == "create_folder":
+            details_parts.append(f"Folder: [filepath]{step.get('path', 'N/A')}[/filepath]")
+        elif action == "move":
+            details_parts.append(f"Source: [filepath]{step.get('source', 'N/A')}[/filepath]")
+            details_parts.append(f"Destination: [filepath]{step.get('destination', 'N/A')}[/filepath]")
         else:
-            details_str=f"[danger]Unknown action type: {action_type}[/danger]"; is_action_valid=False; action_status_msg="[danger]Unknown Act[/danger]"
-        
-        tbl.add_row(icon,str(i+1),action_type if is_action_valid else f"[strike]{action_type}[/strike]",Text.from_markup(details_str), Text.from_markup(action_status_msg))
-        if is_action_valid: valid_actions_to_execute.append(action_data)
-        else:
-            if action_status_msg not in ["[dim_text]No Change[/dim_text]"]: invalid_actions_found=True
-    console.print(tbl)
+            details_parts.append(str(step)) # Raw details for unknown actions
+        table.add_row(str(i + 1), action.replace("_", " ").title(), "\n".join(details_parts))
+    cli_ui.console.print(table)
 
-    if invalid_actions_found: print_warning("The proposed plan contains invalid or unsafe actions (struck out and marked above). Only valid actions will be considered for execution.","Plan Validation Issues")
-    if not valid_actions_to_execute:
-        print_info("No valid actions remaining in the plan after validation. Nothing to execute.","Plan Empty Post-Validation")
-        log_action("propose_and_execute_organization", {**parameters,"initial_plan_c":len(plan_json_actions),"valid_c":0, "python_generated": python_generated_plan_used}, "failure", "No valid actions post-validation")
+    confirm_execution = cli_ui.ask_question_prompt(
+        f"\n{cli_constants.ICONS.get('confirm','👉')} Do you want to execute this plan for '[filepath]{resolved_path}[/filepath]'? (yes/no)"
+    )
+    if confirm_execution.lower() not in ["yes", "y"]:
+        cli_ui.print_info("Organization plan execution cancelled by user.", "Execution Cancelled")
+        activity_logger.update_last_activity_status("user_cancelled", "User cancelled organization plan execution.")
         return
 
-    log_action("propose_and_execute_organization",{**parameters,"initial_plan_c":len(plan_json_actions),"valid_c":len(valid_actions_to_execute), "python_generated": python_generated_plan_used},"plan_proposed")
     
-    if Confirm.ask(Text.from_markup(f"{ICONS['confirm']} Execute the {len(valid_actions_to_execute)} valid action(s) listed above?"),default=False, console=console):
-        console.print(Padding(f"{ICONS['execute']} [bold]Executing validated plan...[/bold]",(1,0)))
-        success_count, fail_count = 0, 0
-        with Progress(console=console,expand=True) as prog_bar:
-            exec_task = prog_bar.add_task(f"{ICONS['execute']} [spinner_style]Processing...[/spinner_style]",total=len(valid_actions_to_execute))
-            for idx, exec_action_data in enumerate(valid_actions_to_execute):
-                action_type_exec = exec_action_data["action_type"]
-                prog_bar.update(exec_task,description=f"{ICONS['execute']} [spinner_style]Step {idx+1}: {action_type_exec}...[/spinner_style]")
-                op_successful, log_status, message_detail = False, "failure", ""
-                if action_type_exec=="CREATE_FOLDER":
-                    path_to_create = exec_action_data["path"]
-                    try:
-                        if os.path.exists(path_to_create) and os.path.isdir(path_to_create):
-                            message_detail=f"  {ICONS['info']} [dim_text]Folder '{os.path.basename(path_to_create)}' already exists. Skipped.[/dim_text]"; op_successful, log_status = True, "skipped"
-                        else:
-                            os.makedirs(path_to_create,exist_ok=True)
-                            message_detail=f"  {ICONS['success']} [green]Created folder:[/] [filepath]{os.path.basename(path_to_create)}[/filepath]"; op_successful, log_status = True, "success"
-                    except Exception as e: message_detail=f"  {ICONS['error']} [danger]FAIL CREATE FOLDER '{os.path.basename(path_to_create)}': {e}[/danger]"
-                elif action_type_exec=="MOVE_ITEM":
-                    source_item_path = exec_action_data["source"]
-                    destination_item_path = exec_action_data["destination"]
-                    if not os.path.exists(source_item_path):
-                        message_detail=f"  {ICONS['warning']} [warning]Source '{os.path.basename(source_item_path)}' disappeared before move. Skipped.[/warning]"; log_status="skipped"
-                    elif fu_move_item(source_item_path,destination_item_path,console): # Use fu_move_item
-                        dest_display_path = os.path.relpath(destination_item_path, os.path.dirname(source_item_path)) if destination_item_path.startswith(os.path.dirname(source_item_path)) else os.path.basename(destination_item_path)
-                        message_detail=f"  {ICONS['success']} [green]Moved:[/] [filepath]{os.path.basename(source_item_path)}[/filepath] -> [filepath]{dest_display_path}[/filepath]"; op_successful, log_status = True, "success"
-                    else: message_detail=f"  {ICONS['error']} [danger]FAIL MOVE '{os.path.basename(source_item_path)}' (see details above).[/danger]"
-                
-                console.print(Text.from_markup(message_detail))
-                if op_successful: success_count +=1
-                else: fail_count +=1
-                log_action(f"exec_org_{action_type_exec.lower()}",{**exec_action_data,"base_path":abs_base_analysis_path},log_status,message_detail.split(":",1)[-1].strip() if ":" in message_detail else message_detail.strip())
-                prog_bar.update(exec_task,advance=1)
-            prog_bar.update(exec_task,description=f"{ICONS['success']} [green]Execution complete.[/green]")
-        
-        print_success(f"Organization plan execution finished. Successful: {success_count}, Failed/Skipped: {fail_count}","Organization Summary")
-        session_manager.update_session_context("last_referenced_file_path",None)
-        session_manager.update_session_context("last_folder_listed_path",None)
-        session_manager.update_session_context("last_search_results",[])
-        log_action("execute_organization_plan",{**parameters,"executed_c":len(valid_actions_to_execute),"ok_c":success_count,"fail_c":fail_count, "python_generated": python_generated_plan_used},"completed")
+    cli_ui.console.print(f"\n{cli_constants.ICONS.get('execute','🚀')} Executing organization plan...")
+    executed_successfully = True
+    for i, step in enumerate(plan_steps):
+        cli_ui.console.print(f"Step {i+1}/{len(plan_steps)}: {step.get('action')}", end=" -> ")
+        action_result = False
+        try:
+            if step.get("action") == "create_folder":
+                folder_to_create = os.path.join(resolved_path, step.get("path"))
+                if not os.path.exists(folder_to_create):
+                    os.makedirs(folder_to_create)
+                    cli_ui.console.print(f"[green]Created folder: {folder_to_create}[/green]")
+                    action_result = True
+                else:
+                    cli_ui.console.print(f"[yellow]Folder already exists (skipped): {folder_to_create}[/yellow]")
+                    action_result = True # Skipped is a form of success for the plan
+            
+            elif step.get("action") == "move":
+                source_abs = os.path.join(resolved_path, step.get("source"))
+                dest_abs = os.path.join(resolved_path, step.get("destination"))
+
+                if not os.path.exists(source_abs):
+                    cli_ui.console.print(f"[red]Error: Source file/folder not found: {source_abs}[/red]")
+                    action_result = False
+                else:
+                    dest_dir_abs = os.path.dirname(dest_abs)
+                    if not os.path.exists(dest_dir_abs):
+                        os.makedirs(dest_dir_abs) 
+                        cli_ui.console.print(f"[dim]Ensured destination directory exists: {dest_dir_abs}[/dim]", end=" -> ")
+                    
+                    shutil.move(source_abs, dest_abs)
+                    cli_ui.console.print(f"[green]Moved {step.get('source')} to {step.get('destination')}[/green]")
+                    action_result = True
+            else:
+                cli_ui.console.print(f"[yellow]Unknown action '{step.get('action')}' skipped.[/yellow]")
+                action_result = True 
+
+            if not action_result:
+                executed_successfully = False
+                cli_ui.print_error(f"Failed to execute step {i+1}. Aborting plan.", "Execution Error")
+                break
+        except Exception as e_exec: # Variable is e_exec
+            cli_ui.console.print(f"[red]Error executing step {i+1}: {e_exec}[/red]") # CORRECTED: Use e_exec here
+            cli_ui.console.print_exception(max_frames=1)
+            executed_successfully = False
+            break
+            
+    if executed_successfully:
+        cli_ui.print_success("Organization plan executed successfully.", "Organization Complete")
+        activity_logger.update_last_activity_status("success", "Organization plan executed.", result_data={"path": resolved_path, "goal": organization_goal, "steps_count": len(plan_steps)})
     else:
-        print_info("Organization plan execution cancelled by user.");
-        log_action("execute_organization_plan",{**parameters,"valid_c":len(valid_actions_to_execute), "python_generated": python_generated_plan_used},"cancelled")
+        cli_ui.print_error("Organization plan execution failed or was aborted due to errors.", "Organization Failed")
+        activity_logger.update_last_activity_status("failure", "Organization plan execution failed or aborted.", result_data={"path": resolved_path, "goal": organization_goal})
 
 
-# Populate the map
-_ACTION_HANDLERS_MAP.update({
-    "summarize_file": handle_summarize_file,
-    "ask_question_about_file": handle_ask_question,
-    "list_folder_contents": handle_list_folder,
-    "move_item": handle_move_item,
-    "search_files": handle_search_files,
-    "propose_and_execute_organization": handle_propose_and_execute_organization,
-    "show_activity_log": handle_show_activity_log,
-    "redo_activity": handle_redo_activity,
-    "general_chat": handle_general_chat
-})
+def handle_show_activity_log(parameters: dict):
+    """Displays recent activity logs."""
+    activity_logger.log_action("show_activity_log", parameters, "pending_execution", "Attempting to show activity log.")
+    count = parameters.get("count", 10) # Default to last 10 activities
+
+    try:
+        logs = activity_logger.get_last_n_activities(count)
+        if not logs:
+            cli_ui.print_info("No activities found in the log.", "Activity Log Empty")
+            activity_logger.update_last_activity_status("success", "Log viewed (empty).")
+            return
+
+        cli_ui.print_success(f"Displaying last {min(count, len(logs))} activities:", "Activity Log")
+        
+        table = Table(title=None, show_header=True, header_style="table.header", box=ROUNDED)
+        table.add_column("Timestamp", style="dim", width=20)
+        table.add_column("Action", style="bold cyan", width=25)
+        table.add_column("Status", width=15)
+        table.add_column("Details/Parameters", min_width=40, overflow="fold")
+
+        for log_entry in logs:
+            params_str_parts = []
+            if log_entry.get("parameters"):
+                for k, v in log_entry["parameters"].items():
+                    v_str = str(v)
+                    if len(v_str) > 70: v_str = v_str[:67] + "..." # Truncate long param values
+                    params_str_parts.append(f"[dim_text]{k}[/dim_text]=[highlight]{v_str}[/highlight]")
+            params_display = ", ".join(params_str_parts) if params_str_parts else log_entry.get("details", "N/A")
+            
+            status = log_entry.get('status', 'N/A')
+            status_style = "green" if "success" in status else ("yellow" if "pending" in status or "user_cancelled" in status or "partial" in status else ("red" if "fail" in status or "exception" in status else "dim"))
+
+            table.add_row(
+                log_entry.get("timestamp_readable", "N/A"),
+                log_entry.get("action_name", "N/A"),
+                Text(status.replace("_", " ").title(), style=status_style),
+                params_display
+            )
+        cli_ui.console.print(table)
+        activity_logger.update_last_activity_status("success", f"Displayed last {min(count, len(logs))} activities.")
+
+    except Exception as e:
+        cli_ui.print_error(f"Failed to display activity log: {e}", "Log Display Error")
+        cli_ui.console.print_exception(max_frames=2)
+        activity_logger.update_last_activity_status("failure", f"Error displaying log: {e}")
+
+
+def handle_general_chat(connector, parameters: dict):
+    """Handles general chat or commands not fitting other categories."""
+    activity_logger.log_action("general_chat", parameters, "pending_execution", "Handling general chat/command.")
+    user_query = parameters.get("user_query", "") # This should be the original full input if NLU defaulted here
+
+    if not user_query:
+        cli_ui.print_warning("No query provided for general chat.", "Chat Error")
+        activity_logger.update_last_activity_status("failure", "Empty query for general chat.")
+        return
+
+    cli_ui.console.print(f"{cli_constants.ICONS.get('thinking','🤔')} Thinking about: \"{user_query[:60]}...\"")
+    
+    chat_spinner_text = f"[spinner_style] {cli_constants.ICONS.get('thinking','🤔')} Processing general query...[/spinner_style]"
+    with Live(Spinner("dots", text=chat_spinner_text), console=cli_ui.console, transient=True, refresh_per_second=10):
+        response = connector.general_chat_completion(user_query) # Assumes connector has such a method
+
+    if response and response.get("response_text"):
+        # For general chat, just print the response directly, maybe in an info panel if it's long.
+        # Or use Markdown if the response might contain it.
+        cli_ui.print_panel_message("LLM Response", response["response_text"], "info", cli_constants.ICONS.get('app_icon','🤖'))
+        activity_logger.update_last_activity_status("success", "General chat response provided.")
+    elif response and response.get("error"):
+        cli_ui.print_error(f"LLM could not process the query: {response['error']}", "Chat Processing Failed")
+        activity_logger.update_last_activity_status("failure", f"LLM error during general chat: {response['error']}")
+    else:
+        cli_ui.print_error("LLM did not return a valid response or error for the general query.", "Chat Processing Failed")
+        activity_logger.update_last_activity_status("failure", "LLM no valid response for general chat.")
+
+def handle_redo_activity(connector, parameters: dict):
+    """Allows re-doing a previous activity from the log."""
+    activity_logger.log_action("redo_activity", parameters, "pending_execution", "Attempting to redo activity.")
+    # This handler is complex. It needs to:
+    # 1. Get the 'activity_id' or 'index_in_log' from parameters.
+    # 2. Fetch that specific activity from activity_logger.
+    # 3. Re-populate action_name and parameters.
+    # 4. Get the appropriate handler from the map.
+    # 5. Call the handler.
+    # This requires main_cli.py to be able to dispatch an action again.
+    # A simpler approach might be to have this function return the action_name and params
+    # to main_cli.py, which then re-enters its dispatch logic.
+    # For now, let's just stub it.
+    
+    target_activity_ref = parameters.get("activity_reference") # Could be "last", "last search", or an index/ID
+
+    cli_ui.print_warning(f"Redo functionality for '{target_activity_ref}' is not fully implemented yet. It would require re-dispatching the original command.", "Not Implemented")
+    activity_logger.update_last_activity_status("partial_failure", "Redo not fully implemented.")
+    # In a full implementation:
+    # original_action_log = activity_logger.get_activity_by_reference(target_activity_ref)
+    # if original_action_log:
+    #     action_to_redo = original_action_log.get("action_name")
+    #     params_to_redo = original_action_log.get("parameters")
+    #     cli_ui.print_info(f"Attempting to redo action: {action_to_redo} with params: {params_to_redo}")
+    #     # Here you'd need to call the main dispatch loop or the specific handler again.
+    #     # This is tricky as it might create nested calls or state issues.
+    # else:
+    #     cli_ui.print_error(f"Could not find activity '{target_activity_ref}' to redo.", "Redo Error")
+
+
+# === Action Handler Map ===
+# This map is used by main_cli.py to find the correct handler function.
+# It's good practice to define it here so all handlers are in one place.
 
 def get_action_handler_map():
-    return _ACTION_HANDLERS_MAP
+    return {
+        "summarize_file": handle_summarize_file,
+        "ask_question_about_file": handle_ask_question_about_file,
+        "list_folder_contents": handle_list_folder_contents,
+        "search_files": handle_search_files,
+        "move_item": handle_move_item,
+        "propose_and_execute_organization": handle_propose_and_execute_organization,
+        "show_activity_log": handle_show_activity_log,
+        "general_chat": handle_general_chat, # Fallback for unrecognized but potentially valid LLM actions
+        "redo_activity": handle_redo_activity,
+        # Add other action handlers here as you create them
+        # "unknown": handle_unknown_action, # You might want a specific handler for truly unknown actions
+    }

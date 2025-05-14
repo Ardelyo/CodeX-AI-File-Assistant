@@ -1,98 +1,1295 @@
 {
   "current_directory": "C:\\Users\\X1 CARBON\\agenticpersonal",
-  "last_referenced_file_path": "c:\\users\\x1 carbon\\downloads\\phone link\\file_0000000088f861f587e649a474c7aa49.png",
-  "last_folder_listed_path": "c:\\users\\x1 carbon\\downloads\\phone link",
+  "last_referenced_file_path": null,
+  "last_folder_listed_path": "C:\\Users\\X1 CARBON\\Downloads",
   "last_search_results": [
+    {
+      "name": "3811708926.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\3811708926.png"
+    },
+    {
+      "name": "dots-art (1).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\dots-art (1).png"
+    },
+    {
+      "name": "dots-art.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\dots-art.png"
+    },
+    {
+      "name": "favicon.ico.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\favicon.ico.jpg"
+    },
+    {
+      "name": "gods-hand-vector-sticker-creatio-4k-dots.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\gods-hand-vector-sticker-creatio-4k-dots.png"
+    },
+    {
+      "name": "gods-hand-vector-sticker-creatio-dots.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\gods-hand-vector-sticker-creatio-dots.png"
+    },
+    {
+      "name": "gods-hand-vector-sticker-creatio.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\gods-hand-vector-sticker-creatio.png"
+    },
+    {
+      "name": "svgviewer-output.svg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\svgviewer-output.svg"
+    },
+    {
+      "name": "svgviewer-png-output (1).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\svgviewer-png-output (1).png"
+    },
+    {
+      "name": "svgviewer-png-output (2).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\svgviewer-png-output (2).png"
+    },
+    {
+      "name": "svgviewer-png-output (3).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\svgviewer-png-output (3).png"
+    },
+    {
+      "name": "svgviewer-png-output.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\svgviewer-png-output.png"
+    },
+    {
+      "name": "WhatsApp Image 2025-05-12 at 16.31.46.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\WhatsApp Image 2025-05-12 at 16.31.46.jpeg"
+    },
+    {
+      "name": "WhatsApp Image 2025-05-12 at 16.31.47.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\WhatsApp Image 2025-05-12 at 16.31.47.jpeg"
+    },
+    {
+      "name": "WhatsApp Image 2025-05-12 at 16.31.48.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\WhatsApp Image 2025-05-12 at 16.31.48.jpeg"
+    },
+    {
+      "name": "WhatsApp Image 2025-05-12 at 16.32.28 (1).jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\WhatsApp Image 2025-05-12 at 16.32.28 (1).jpeg"
+    },
+    {
+      "name": "WhatsApp Image 2025-05-12 at 16.32.28.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\WhatsApp Image 2025-05-12 at 16.32.28.jpeg"
+    },
+    {
+      "name": "136123(1).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136123(1).png"
+    },
+    {
+      "name": "136123(2).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136123(2).png"
+    },
+    {
+      "name": "136123(3).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136123(3).png"
+    },
+    {
+      "name": "136123(4).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136123(4).png"
+    },
+    {
+      "name": "136123.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136123.png"
+    },
+    {
+      "name": "136124(1).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136124(1).png"
+    },
+    {
+      "name": "136124(2).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136124(2).png"
+    },
+    {
+      "name": "136124(3).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136124(3).png"
+    },
+    {
+      "name": "136124(4).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136124(4).png"
+    },
+    {
+      "name": "136124.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136124.png"
+    },
+    {
+      "name": "136125(1).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136125(1).png"
+    },
+    {
+      "name": "136125(2).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136125(2).png"
+    },
+    {
+      "name": "136125(3).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136125(3).png"
+    },
+    {
+      "name": "136125(4).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136125(4).png"
+    },
+    {
+      "name": "136125.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136125.png"
+    },
+    {
+      "name": "136126(1).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136126(1).png"
+    },
+    {
+      "name": "136126(2).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136126(2).png"
+    },
+    {
+      "name": "136126(3).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136126(3).png"
+    },
+    {
+      "name": "136126(4).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136126(4).png"
+    },
+    {
+      "name": "136126.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\136126.png"
+    },
+    {
+      "name": "20219344-68fd3976-bd4b-49ce-85a8-a3fd7d8bc783.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\20219344-68fd3976-bd4b-49ce-85a8-a3fd7d8bc783.jpeg"
+    },
+    {
+      "name": "20219344-b46b692b-ecd9-4c70-9ee7-ee06c5f9b353.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\20219344-b46b692b-ecd9-4c70-9ee7-ee06c5f9b353.jpeg"
+    },
+    {
+      "name": "20219344-e2c4e61e-b446-4976-bbd1-5ad3731ee734.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\20219344-e2c4e61e-b446-4976-bbd1-5ad3731ee734.jpg"
+    },
+    {
+      "name": "marker-icon-blue.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\marker-icon-blue.png"
+    },
+    {
+      "name": "marker-icon-red.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung _ Profil SMP NEGERI 20_files\\marker-icon-red.png"
+    },
+    {
+      "name": "marker-icon-blue.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung_files\\marker-icon-blue.png"
+    },
+    {
+      "name": "marker-icon-green.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung_files\\marker-icon-green.png"
+    },
+    {
+      "name": "marker-icon-violet.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung_files\\marker-icon-violet.png"
+    },
+    {
+      "name": "marker-shadow.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Dapodik Bandung_files\\marker-shadow.png"
+    },
+    {
+      "name": "bridge-illustration.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Daya Anagata Nusantara - Danantara_files\\bridge-illustration.png"
+    },
+    {
+      "name": "building-flag-indo.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Daya Anagata Nusantara - Danantara_files\\building-flag-indo.png"
+    },
+    {
+      "name": "danantara-building-trademark.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Daya Anagata Nusantara - Danantara_files\\danantara-building-trademark.png"
+    },
+    {
+      "name": "danantara-logo-black-v2(1).png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Daya Anagata Nusantara - Danantara_files\\danantara-logo-black-v2(1).png"
+    },
+    {
+      "name": "danantara-logo-black-v2.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Daya Anagata Nusantara - Danantara_files\\danantara-logo-black-v2.png"
+    },
+    {
+      "name": "en-logo.31a47fe0.svg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Daya Anagata Nusantara - Danantara_files\\en-logo.31a47fe0.svg"
+    },
+    {
+      "name": "hero-children-indo.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Daya Anagata Nusantara - Danantara_files\\hero-children-indo.png"
+    },
+    {
+      "name": "icon-mail.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Daya Anagata Nusantara - Danantara_files\\icon-mail.png"
+    },
+    {
+      "name": "icon-place.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Daya Anagata Nusantara - Danantara_files\\icon-place.png"
+    },
+    {
+      "name": "id-logo.c9499420.svg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Daya Anagata Nusantara - Danantara_files\\id-logo.c9499420.svg"
+    },
+    {
+      "name": "landscape-illustration.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Daya Anagata Nusantara - Danantara_files\\landscape-illustration.png"
+    },
+    {
+      "name": "president-prabowo.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Daya Anagata Nusantara - Danantara_files\\president-prabowo.png"
+    },
+    {
+      "name": "1676416070.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1676416070.jpeg"
+    },
+    {
+      "name": "1676601210.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1676601210.jpeg"
+    },
+    {
+      "name": "1678853274.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1678853274.jpeg"
+    },
+    {
+      "name": "1679390133.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1679390133.jpg"
+    },
+    {
+      "name": "1679554404.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1679554404.jpg"
+    },
+    {
+      "name": "1685790250.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1685790250.png"
+    },
+    {
+      "name": "1686239474.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1686239474.jpeg"
+    },
+    {
+      "name": "1686288635.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1686288635.jpg"
+    },
+    {
+      "name": "1703395152.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1703395152.jpg"
+    },
+    {
+      "name": "1703491599.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1703491599.jpg"
+    },
+    {
+      "name": "1703598050.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1703598050.jpg"
+    },
+    {
+      "name": "1710388763.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1710388763.jpeg"
+    },
+    {
+      "name": "1735795657GveBN.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1735795657GveBN.jpg"
+    },
+    {
+      "name": "1738146118Bhgeq.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1738146118Bhgeq.jpg"
+    },
+    {
+      "name": "17392569081a277.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\17392569081a277.jpg"
+    },
+    {
+      "name": "1743322531.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1743322531.jpeg"
+    },
+    {
+      "name": "1743343186.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1743343186.jpeg"
+    },
+    {
+      "name": "1744026054.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1744026054.jpg"
+    },
+    {
+      "name": "17452985189p0X3.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\17452985189p0X3.jpg"
+    },
+    {
+      "name": "1745721477.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1745721477.jpg"
+    },
+    {
+      "name": "1745742968wPqGO.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1745742968wPqGO.jpg"
+    },
+    {
+      "name": "1745984970ifBFR.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1745984970ifBFR.jpeg"
+    },
+    {
+      "name": "1745985145M7b7O.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1745985145M7b7O.jpeg"
+    },
+    {
+      "name": "1745985218c5iUK.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1745985218c5iUK.jpeg"
+    },
+    {
+      "name": "1745985331yIbaR.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1745985331yIbaR.jpg"
+    },
+    {
+      "name": "17459854095rdgr.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\17459854095rdgr.jpeg"
+    },
+    {
+      "name": "1746003059.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746003059.jpeg"
+    },
+    {
+      "name": "1746316395.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746316395.jpeg"
+    },
+    {
+      "name": "1746327504.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746327504.jpeg"
+    },
+    {
+      "name": "1746327859.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746327859.jpeg"
+    },
+    {
+      "name": "1746344440.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746344440.jpg"
+    },
+    {
+      "name": "1746504715.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746504715.jpg"
+    },
+    {
+      "name": "1746504884.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746504884.jpg"
+    },
+    {
+      "name": "1746505478.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746505478.jpg"
+    },
+    {
+      "name": "1746586879.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746586879.jpg"
+    },
+    {
+      "name": "1746627899.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746627899.jpg"
+    },
+    {
+      "name": "1746760805.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746760805.jpg"
+    },
+    {
+      "name": "1746775061.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746775061.jpeg"
+    },
+    {
+      "name": "1746780398.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746780398.jpg"
+    },
+    {
+      "name": "1746781888.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746781888.jpeg"
+    },
+    {
+      "name": "1746785927.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746785927.jpg"
+    },
+    {
+      "name": "1746787330.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746787330.jpg"
+    },
+    {
+      "name": "1746799139.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746799139.jpeg"
+    },
+    {
+      "name": "1746801372.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746801372.jpeg"
+    },
+    {
+      "name": "1746802486.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746802486.jpg"
+    },
+    {
+      "name": "1746846186.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746846186.jpg"
+    },
+    {
+      "name": "1746847554.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746847554.jpg"
+    },
+    {
+      "name": "1746847737.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746847737.jpg"
+    },
+    {
+      "name": "1746848897.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746848897.jpg"
+    },
+    {
+      "name": "1746849128.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746849128.jpg"
+    },
+    {
+      "name": "1746849847.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746849847.jpg"
+    },
+    {
+      "name": "1746850367.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746850367.jpg"
+    },
+    {
+      "name": "1746851065.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746851065.jpg"
+    },
+    {
+      "name": "1746851614.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746851614.jpg"
+    },
+    {
+      "name": "1746884276.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746884276.jpg"
+    },
+    {
+      "name": "1746934256.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746934256.jpg"
+    },
+    {
+      "name": "1746936461.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746936461.jpg"
+    },
+    {
+      "name": "1746936828.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746936828.jpg"
+    },
+    {
+      "name": "1746939485.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\1746939485.jpg"
+    },
+    {
+      "name": "arabic.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\arabic.png"
+    },
+    {
+      "name": "bahasa.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\bahasa.png"
+    },
+    {
+      "name": "english.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\english.png"
+    },
+    {
+      "name": "files.svg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\files.svg"
+    },
+    {
+      "name": "logo.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\logo.png"
+    },
+    {
+      "name": "maxresdefault(1).jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\maxresdefault(1).jpg"
+    },
+    {
+      "name": "maxresdefault(2).jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\maxresdefault(2).jpg"
+    },
+    {
+      "name": "maxresdefault.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\maxresdefault.jpg"
+    },
+    {
+      "name": "play.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Agama RI_files\\play.png"
+    },
+    {
+      "name": "eppid.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Pendidikan, Kebudayaan, Riset, dan Teknologi \u00bb Republik Indonesia_files\\eppid.png"
+    },
+    {
+      "name": "facebook.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Pendidikan, Kebudayaan, Riset, dan Teknologi \u00bb Republik Indonesia_files\\facebook.png"
+    },
+    {
+      "name": "info-icon.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Pendidikan, Kebudayaan, Riset, dan Teknologi \u00bb Republik Indonesia_files\\info-icon.png"
+    },
+    {
+      "name": "instagram.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Pendidikan, Kebudayaan, Riset, dan Teknologi \u00bb Republik Indonesia_files\\instagram.png"
+    },
+    {
+      "name": "kemdikbud_64x64.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Pendidikan, Kebudayaan, Riset, dan Teknologi \u00bb Republik Indonesia_files\\kemdikbud_64x64.png"
+    },
+    {
+      "name": "twitter.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Pendidikan, Kebudayaan, Riset, dan Teknologi \u00bb Republik Indonesia_files\\twitter.png"
+    },
+    {
+      "name": "youtube2.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Kementerian Pendidikan, Kebudayaan, Riset, dan Teknologi \u00bb Republik Indonesia_files\\youtube2.png"
+    },
+    {
+      "name": "08vc131)_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\08vc131)_thumb.jpg"
+    },
+    {
+      "name": "66309bd7b6080_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\66309bd7b6080_thumb.jpg"
+    },
+    {
+      "name": "antarafoto-presiden-prabowo-dan-bill-gates-tinjau-mbg-1746602555_compressed.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\antarafoto-presiden-prabowo-dan-bill-gates-tinjau-mbg-1746602555_compressed.jpg"
+    },
+    {
+      "name": "antarafoto-presiden-prabowo-dan-bill-gates-tinjau-mbg-1746602555_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\antarafoto-presiden-prabowo-dan-bill-gates-tinjau-mbg-1746602555_thumb.jpg"
+    },
+    {
+      "name": "arrow-right.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\arrow-right.png"
+    },
+    {
+      "name": "buruh_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\buruh_thumb.jpg"
+    },
+    {
+      "name": "dsgfgfggr454.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\dsgfgfggr454.jpg"
+    },
+    {
+      "name": "eSIM_meutya_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\eSIM_meutya_thumb.jpg"
+    },
+    {
+      "name": "FOTOMUDIK-10_thumb(1).jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\FOTOMUDIK-10_thumb(1).jpg"
+    },
+    {
+      "name": "FOTOMUDIK-10_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\FOTOMUDIK-10_thumb.jpg"
+    },
+    {
+      "name": "Foto_12_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\Foto_12_thumb.jpg"
+    },
+    {
+      "name": "Foto_13_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\Foto_13_thumb.jpg"
+    },
+    {
+      "name": "Foto_15_compressed.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\Foto_15_compressed.jpg"
+    },
+    {
+      "name": "foto_1_compressed(1).jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\foto_1_compressed(1).jpg"
+    },
+    {
+      "name": "foto_1_compressed.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\foto_1_compressed.jpg"
+    },
+    {
+      "name": "Foto_6_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\Foto_6_thumb.jpg"
+    },
+    {
+      "name": "FOTO_ARUS_BALIK_151_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\FOTO_ARUS_BALIK_151_thumb.jpg"
+    },
+    {
+      "name": "Gambar_WhatsApp_2025-05-09_pukul_19_30_47_c2d2a5b9_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\Gambar_WhatsApp_2025-05-09_pukul_19_30_47_c2d2a5b9_thumb.jpg"
+    },
+    {
+      "name": "griya_igid_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\griya_igid_thumb.jpg"
+    },
+    {
+      "name": "haji_umroh_presiden_prabowo_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\haji_umroh_presiden_prabowo_thumb.jpg"
+    },
+    {
+      "name": "hfdhfhfhg1.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\hfdhfhfhg1.jpg"
+    },
+    {
+      "name": "hgfhgfhgfhgh55656.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\hgfhgfhgfhgh55656.jpg"
+    },
+    {
+      "name": "id-flag.svg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\id-flag.svg"
+    },
+    {
+      "name": "igid_burung_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\igid_burung_thumb.jpg"
+    },
+    {
+      "name": "Kemen_PKP1_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\Kemen_PKP1_thumb.jpg"
+    },
+    {
+      "name": "kfgdshjbheyty6565.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\kfgdshjbheyty6565.jpg"
+    },
+    {
+      "name": "main-logo.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\main-logo.png"
+    },
+    {
+      "name": "maxresdefault(1).jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\maxresdefault(1).jpg"
+    },
+    {
+      "name": "maxresdefault(2).jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\maxresdefault(2).jpg"
+    },
+    {
+      "name": "maxresdefault(3).jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\maxresdefault(3).jpg"
+    },
+    {
+      "name": "maxresdefault(4).jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\maxresdefault(4).jpg"
+    },
+    {
+      "name": "maxresdefault(5).jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\maxresdefault(5).jpg"
+    },
+    {
+      "name": "maxresdefault.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\maxresdefault.jpg"
+    },
+    {
+      "name": "mbg_igid_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\mbg_igid_thumb.jpg"
+    },
+    {
+      "name": "mudik_igid_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\mudik_igid_thumb.jpg"
+    },
+    {
+      "name": "pendidikan_igid_presiden_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\pendidikan_igid_presiden_thumb.jpg"
+    },
+    {
+      "name": "pndidikan_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\pndidikan_thumb.jpg"
+    },
+    {
+      "name": "saafdsdfdfdf5.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\saafdsdfdfdf5.jpg"
+    },
+    {
+      "name": "search.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\search.png"
+    },
+    {
+      "name": "Suahasil_Nazara2_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\Suahasil_Nazara2_thumb.jpg"
+    },
+    {
+      "name": "tarif_as_igid_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\tarif_as_igid_thumb.jpg"
+    },
+    {
+      "name": "uk-flag.svg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\uk-flag.svg"
+    },
+    {
+      "name": "WhatsApp_Image_2025-03-03_at_10_37_38_thumb.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\WhatsApp_Image_2025-03-03_at_10_37_38_thumb.jpeg"
+    },
+    {
+      "name": "WhatsApp_Image_2025-03-06_at_14_27_08.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\WhatsApp_Image_2025-03-06_at_14_27_08.jpeg"
+    },
+    {
+      "name": "WhatsApp_Image_2025-03-09_at_22_57_06_7a2bec32_thumb.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\WhatsApp_Image_2025-03-09_at_22_57_06_7a2bec32_thumb.jpg"
+    },
+    {
+      "name": "WhatsApp_Image_2025-04-25_at_5_43_39_PM_thumb.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\WhatsApp_Image_2025-04-25_at_5_43_39_PM_thumb.jpeg"
+    },
+    {
+      "name": "wiY4v2ftLwHoOFoHn2xELrDRa1q9YuMgOs2dfQ16_thumb.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Laman Resmi Republik Indonesia \u2022 Portal Informasi Indonesia_files\\wiY4v2ftLwHoOFoHn2xELrDRa1q9YuMgOs2dfQ16_thumb.jpeg"
+    },
     {
       "name": "file_0000000088f861f587e649a474c7aa49.png",
       "type": "file",
-      "path": "c:\\users\\x1 carbon\\downloads\\phone link\\file_0000000088f861f587e649a474c7aa49.png"
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Phone Link\\file_0000000088f861f587e649a474c7aa49.png"
     },
     {
       "name": "file_00000000f230623096f1aea23608e962.png",
       "type": "file",
-      "path": "c:\\users\\x1 carbon\\downloads\\phone link\\file_00000000f230623096f1aea23608e962.png"
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Phone Link\\file_00000000f230623096f1aea23608e962.png"
     },
     {
       "name": "google-material-3-expressive.png",
       "type": "file",
-      "path": "c:\\users\\x1 carbon\\downloads\\phone link\\google-material-3-expressive.png"
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Phone Link\\google-material-3-expressive.png"
     },
     {
       "name": "material-3-redesign-your-mix.png",
       "type": "file",
-      "path": "c:\\users\\x1 carbon\\downloads\\phone link\\material-3-redesign-your-mix.png"
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Phone Link\\material-3-redesign-your-mix.png"
     },
     {
       "name": "material-3-redesign.jpeg",
       "type": "file",
-      "path": "c:\\users\\x1 carbon\\downloads\\phone link\\material-3-redesign.jpeg"
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Phone Link\\material-3-redesign.jpeg"
     },
     {
       "name": "Screenshot_2025-05-08-05-05-35-25_1c337646f29875672b5a61192b9010f9.jpg",
       "type": "file",
-      "path": "c:\\users\\x1 carbon\\downloads\\phone link\\Screenshot_2025-05-08-05-05-35-25_1c337646f29875672b5a61192b9010f9.jpg"
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Phone Link\\Screenshot_2025-05-08-05-05-35-25_1c337646f29875672b5a61192b9010f9.jpg"
     },
     {
       "name": "Screenshot_2025-05-08-05-27-06-63_40deb401b9ffe8e1df2f1cc5ba480b12.jpg",
       "type": "file",
-      "path": "c:\\users\\x1 carbon\\downloads\\phone link\\Screenshot_2025-05-08-05-27-06-63_40deb401b9ffe8e1df2f1cc5ba480b12.jpg"
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Phone Link\\Screenshot_2025-05-08-05-27-06-63_40deb401b9ffe8e1df2f1cc5ba480b12.jpg"
     },
     {
       "name": "Screenshot_2025-05-08-05-54-11-07_40deb401b9ffe8e1df2f1cc5ba480b12.jpg",
       "type": "file",
-      "path": "c:\\users\\x1 carbon\\downloads\\phone link\\Screenshot_2025-05-08-05-54-11-07_40deb401b9ffe8e1df2f1cc5ba480b12.jpg"
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Phone Link\\Screenshot_2025-05-08-05-54-11-07_40deb401b9ffe8e1df2f1cc5ba480b12.jpg"
     },
     {
       "name": "Screenshot_2025-05-08-05-54-16-27_40deb401b9ffe8e1df2f1cc5ba480b12.jpg",
       "type": "file",
-      "path": "c:\\users\\x1 carbon\\downloads\\phone link\\Screenshot_2025-05-08-05-54-16-27_40deb401b9ffe8e1df2f1cc5ba480b12.jpg"
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Phone Link\\Screenshot_2025-05-08-05-54-16-27_40deb401b9ffe8e1df2f1cc5ba480b12.jpg"
     },
     {
       "name": "Screenshot_2025-05-08-05-54-32-30_40deb401b9ffe8e1df2f1cc5ba480b12.jpg",
       "type": "file",
-      "path": "c:\\users\\x1 carbon\\downloads\\phone link\\Screenshot_2025-05-08-05-54-32-30_40deb401b9ffe8e1df2f1cc5ba480b12.jpg"
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Phone Link\\Screenshot_2025-05-08-05-54-32-30_40deb401b9ffe8e1df2f1cc5ba480b12.jpg"
     },
     {
       "name": "Screenshot_2025-05-08-05-54-38-36_40deb401b9ffe8e1df2f1cc5ba480b12.jpg",
       "type": "file",
-      "path": "c:\\users\\x1 carbon\\downloads\\phone link\\Screenshot_2025-05-08-05-54-38-36_40deb401b9ffe8e1df2f1cc5ba480b12.jpg"
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Phone Link\\Screenshot_2025-05-08-05-54-38-36_40deb401b9ffe8e1df2f1cc5ba480b12.jpg"
+    },
+    {
+      "name": "163946172629-pengumuman.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\163946172629-pengumuman.jpg"
+    },
+    {
+      "name": "163946174474-transparansi-keuangan.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\163946174474-transparansi-keuangan.jpg"
+    },
+    {
+      "name": "163946191641-bank-data.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\163946191641-bank-data.jpg"
+    },
+    {
+      "name": "163946223697-pelayanan-publik.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\163946223697-pelayanan-publik.jpeg"
+    },
+    {
+      "name": "163946228977-permohonan-informasi.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\163946228977-permohonan-informasi.jpg"
+    },
+    {
+      "name": "16394623291-kesehatan.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\16394623291-kesehatan.jpg"
+    },
+    {
+      "name": "163948466597-pendidikan-dan-kebudayaan.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\163948466597-pendidikan-dan-kebudayaan.jpeg"
+    },
+    {
+      "name": "163948613253-tempat-wisata-dan-rekreasi.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\163948613253-tempat-wisata-dan-rekreasi.png"
+    },
+    {
+      "name": "163948913453-transportasi.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\163948913453-transportasi.jpeg"
+    },
+    {
+      "name": "163954409429-pemerintah-kota-bandung.JPG",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\163954409429-pemerintah-kota-bandung.JPG"
+    },
+    {
+      "name": "164802442068-aplikasi-sadayana.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\164802442068-aplikasi-sadayana.jpeg"
+    },
+    {
+      "name": "164802484068-aplikasi-sipaku.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\164802484068-aplikasi-sipaku.jpeg"
+    },
+    {
+      "name": "166374430222-balai-kota-mobile.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\166374430222-balai-kota-mobile.jpg"
+    },
+    {
+      "name": "166374430249-balai-kota-desktop.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\166374430249-balai-kota-desktop.jpg"
+    },
+    {
+      "name": "16659787382-simdek-sistem-informasi-derek.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\16659787382-simdek-sistem-informasi-derek.jpg"
+    },
+    {
+      "name": "166597926231-aplikasi-salaman.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\166597926231-aplikasi-salaman.jpg"
+    },
+    {
+      "name": "168362893767-pelayanan-berbantuan-oss-rba.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\168362893767-pelayanan-berbantuan-oss-rba.jpg"
+    },
+    {
+      "name": "168362984656-layanan-aduan-parkir.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\168362984656-layanan-aduan-parkir.jpg"
+    },
+    {
+      "name": "168368647617-layanan-gawat-darurat-112-kota-bandung.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\168368647617-layanan-gawat-darurat-112-kota-bandung.jpg"
+    },
+    {
+      "name": "168396508881-mal-pelayanan-publik-mpp-kota-bandung.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\168396508881-mal-pelayanan-publik-mpp-kota-bandung.jpg"
+    },
+    {
+      "name": "168543539651-survei-penilaian-integritas-kpk-2023.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\168543539651-survei-penilaian-integritas-kpk-2023.png"
+    },
+    {
+      "name": "168638278563-simpelman-langkah-mudah-mengurus-izin-pemakaman.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\168638278563-simpelman-langkah-mudah-mengurus-izin-pemakaman.jpg"
+    },
+    {
+      "name": "168679669517-bacang-bandung-caang-baranang.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\168679669517-bacang-bandung-caang-baranang.jpg"
+    },
+    {
+      "name": "169097955777-simonik-aplikasi-permohonan-informasi-publik.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\169097955777-simonik-aplikasi-permohonan-informasi-publik.jpg"
+    },
+    {
+      "name": "16913939133-aplikasi-pelindung.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\16913939133-aplikasi-pelindung.jpg"
+    },
+    {
+      "name": "169191989492-aplikasi-simkuring.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\169191989492-aplikasi-simkuring.jpg"
+    },
+    {
+      "name": "1692109065100-aplikasi-e-penting.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\1692109065100-aplikasi-e-penting.jpg"
+    },
+    {
+      "name": "169262660536-mini-lab-food-security-dengan-e-wasmut.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\169262660536-mini-lab-food-security-dengan-e-wasmut.jpg"
+    },
+    {
+      "name": "16927102497-kangpisman-kurangi-pisahkan-dan-manfaatkan-sampah.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\16927102497-kangpisman-kurangi-pisahkan-dan-manfaatkan-sampah.jpg"
+    },
+    {
+      "name": "169718883011-bandung-waste-management-bwm.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\169718883011-bandung-waste-management-bwm.jpg"
+    },
+    {
+      "name": "169880746756-daftar-lokasi-bank-sampah-kota-bandung.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\169880746756-daftar-lokasi-bank-sampah-kota-bandung.jpg"
+    },
+    {
+      "name": "169995663640-6-lokasi-terlarang-dipasangi-alat-peraga-kampanye.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\169995663640-6-lokasi-terlarang-dipasangi-alat-peraga-kampanye.jpg"
+    },
+    {
+      "name": "170185628364-layanan-chatbot-bandung-smart-city-08112591810.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\170185628364-layanan-chatbot-bandung-smart-city-08112591810.jpg"
+    },
+    {
+      "name": "170297781569-chatbot-disdukcapil-kota-bandung.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\170297781569-chatbot-disdukcapil-kota-bandung.jpg"
+    },
+    {
+      "name": "172916480646-wargi-yuk-ambilperan-dan-terapkan-zero-food-waste-di-perkantoran-ya.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\172916480646-wargi-yuk-ambilperan-dan-terapkan-zero-food-waste-di-perkantoran-ya.jpg"
+    },
+    {
+      "name": "172916653381-wargi-yuk-ambilperan-jangan-hanya-buang-sampah-pada-tempatnya-tapi-juga-pilah-sampah-sesuai-jenisnya.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\172916653381-wargi-yuk-ambilperan-jangan-hanya-buang-sampah-pada-tempatnya-tapi-juga-pilah-sampah-sesuai-jenisnya.jpg"
+    },
+    {
+      "name": "173605792281-hyphen-compound-space-baru-di-kota-bandung-cocok-untuk-nongkrong-dan-kerja-thumb.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\173605792281-hyphen-compound-space-baru-di-kota-bandung-cocok-untuk-nongkrong-dan-kerja-thumb.jpeg"
+    },
+    {
+      "name": "173832513196-bubur-ayam-bejo-si-legendaris-yang-konsisten-buka-24-jam-thumb.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\173832513196-bubur-ayam-bejo-si-legendaris-yang-konsisten-buka-24-jam-thumb.jpeg"
+    },
+    {
+      "name": "173841968485-buaya-yang-setia-ya-cap-roti-buaya-thumb.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\173841968485-buaya-yang-setia-ya-cap-roti-buaya-thumb.jpeg"
+    },
+    {
+      "name": "173890876069-kepala-keluarga-desktop.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\173890876069-kepala-keluarga-desktop.png"
+    },
+    {
+      "name": "173890889510-pertumbuhan-penduduk-desktop.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\173890889510-pertumbuhan-penduduk-desktop.png"
+    },
+    {
+      "name": "173890967514-jenis-kelamin-desktop.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\173890967514-jenis-kelamin-desktop.png"
+    },
+    {
+      "name": "173890977051-agama-desktop.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\173890977051-agama-desktop.png"
+    },
+    {
+      "name": "173891007889-golongan-darah-desktop.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\173891007889-golongan-darah-desktop.png"
+    },
+    {
+      "name": "173891020481-pendidikan-terakhir-desktop.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\173891020481-pendidikan-terakhir-desktop.png"
+    },
+    {
+      "name": "173891046744-jenis-pekerjaan-desktop.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\173891046744-jenis-pekerjaan-desktop.png"
+    },
+    {
+      "name": "173935808541-tiga-rekomendasi-soto-bandung-enak-dan-maknyus-di-kota-bandung-thumb.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\173935808541-tiga-rekomendasi-soto-bandung-enak-dan-maknyus-di-kota-bandung-thumb.jpeg"
+    },
+    {
+      "name": "174152846062-hadirkan-promo-rindu-ramadan-hotel-ini-sajikan-399-hidangan-istimewa-thumb.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\174152846062-hadirkan-promo-rindu-ramadan-hotel-ini-sajikan-399-hidangan-istimewa-thumb.jpeg"
+    },
+    {
+      "name": "174688405464-kota-bandung-tetap-kinclong-pasca-euforia-juara-persib-thumb.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\174688405464-kota-bandung-tetap-kinclong-pasca-euforia-juara-persib-thumb.jpeg"
+    },
+    {
+      "name": "174688420110-wakil-wali-kota-bandung-jadikan-peran-guru-sebagai-jalan-ibadah-menuju-surga-thumb.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\174688420110-wakil-wali-kota-bandung-jadikan-peran-guru-sebagai-jalan-ibadah-menuju-surga-thumb.jpeg"
+    },
+    {
+      "name": "174688454139-erwin-ajak-rt-dan-rw-wujudkan-bandung-utama-thumb.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\174688454139-erwin-ajak-rt-dan-rw-wujudkan-bandung-utama-thumb.jpeg"
+    },
+    {
+      "name": "174688488913-workshop-deep-learning-pemkot-bandung-dorong-guru-kuasai-ai-thumb.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\174688488913-workshop-deep-learning-pemkot-bandung-dorong-guru-kuasai-ai-thumb.jpeg"
+    },
+    {
+      "name": "174688549054-ratusan-pelajar-kota-bandung-bersaing-di-kejuaraan-sepak-takraw-kadet-junior-2025-thumb.jpeg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\174688549054-ratusan-pelajar-kota-bandung-bersaing-di-kejuaraan-sepak-takraw-kadet-junior-2025-thumb.jpeg"
+    },
+    {
+      "name": "2.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\2.png"
+    },
+    {
+      "name": "3.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\3.png"
+    },
+    {
+      "name": "4.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\4.png"
+    },
+    {
+      "name": "ccUtR0lXy3bqcXCrv2dYZYNk3Jdtlx4RlayQAWvs.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\ccUtR0lXy3bqcXCrv2dYZYNk3Jdtlx4RlayQAWvs.jpg"
+    },
+    {
+      "name": "FlBown0ijMQqmJcyPY6P9y5qTNjfW552nGxwUUMO.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\FlBown0ijMQqmJcyPY6P9y5qTNjfW552nGxwUUMO.jpg"
+    },
+    {
+      "name": "jdih-dprd-foot.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\jdih-dprd-foot.png"
+    },
+    {
+      "name": "jdih-foot.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\jdih-foot.png"
+    },
+    {
+      "name": "lapor-float.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\lapor-float.png"
+    },
+    {
+      "name": "logo.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\logo.png"
+    },
+    {
+      "name": "tiktok.png",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\tiktok.png"
+    },
+    {
+      "name": "TZJ18fNMrMJNxXCj1meoPcHvv8rwVwlM1J2SuB9w.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\TZJ18fNMrMJNxXCj1meoPcHvv8rwVwlM1J2SuB9w.jpg"
+    },
+    {
+      "name": "wN11Li5xn1UfpRypemKzzL4RYQQvfjNhkUp3EWUJ.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\wN11Li5xn1UfpRypemKzzL4RYQQvfjNhkUp3EWUJ.jpg"
+    },
+    {
+      "name": "z8pN8K4NK2tkkaMwiAdf6fZmUgBANneh4QkyVdo6.jpg",
+      "type": "file",
+      "path": "C:\\Users\\X1 CARBON\\Downloads\\Website Resmi Kota Bandung_files\\z8pN8K4NK2tkkaMwiAdf6fZmUgBANneh4QkyVdo6.jpg"
     }
   ],
   "command_history": [
-    {
-      "timestamp": "2025-05-10T13:35:15.269091+00:00",
-      "action": "propose_and_execute_organization",
-      "parameters": {
-        "target_path_or_context": "c:\\users\\x1 carbon\\downloads\\phone link",
-        "organization_goal": "their type \"c:\\users\\x1 carbon\\downloads\\phone link"
-      },
-      "nlu_notes": "direct_organize"
-    },
-    {
-      "timestamp": "2025-05-10T13:36:39.534723+00:00",
-      "action": "list_folder_contents",
-      "parameters": {
-        "folder_path": "c:\\users\\x1 carbon\\downloads\\phone link"
-      },
-      "nlu_notes": "direct_list"
-    },
-    {
-      "timestamp": "2025-05-10T13:37:36.311352+00:00",
-      "action": "summarize_file",
-      "parameters": {
-        "file_path": "C:\\Users\\X1 CARBON\\Downloads\\Phone Link"
-      },
-      "nlu_notes": "llm_fallback"
-    },
-    {
-      "timestamp": "2025-05-10T13:38:14.871478+00:00",
-      "action": "summarize_file",
-      "parameters": {
-        "file_path": "C:\\Users\\X1 CARBON\\agenticpersonal\\this \"c:\\users\\x1 carbon\\coding\\2505.03335v2.pdf"
-      },
-      "nlu_notes": "direct_summarize"
-    },
     {
       "timestamp": "2025-05-10T13:38:29.770575+00:00",
       "action": "summarize_file",
@@ -235,9 +1432,45 @@
       "action": "help",
       "parameters": {},
       "nlu_notes": "user_typed"
+    },
+    {
+      "timestamp": "2025-05-14T07:56:28.762465+00:00",
+      "action": "help",
+      "parameters": {},
+      "nlu_notes": "user_typed"
+    },
+    {
+      "timestamp": "2025-05-14T07:56:38.971346+00:00",
+      "action": "search_files",
+      "parameters": {
+        "search_criteria": "images",
+        "search_path": "C:\\Users\\X1 CARBON\\Downloads"
+      },
+      "nlu_notes": "direct_search_in"
+    },
+    {
+      "timestamp": "2025-05-14T08:01:00.961586+00:00",
+      "action": "search_files",
+      "parameters": {
+        "search_criteria": "images",
+        "search_path": "C:\\Users\\X1 CARBON\\Downloads"
+      },
+      "nlu_notes": "direct_search_in"
+    },
+    {
+      "timestamp": "2025-05-14T08:05:44.016601+00:00",
+      "action": "search_files",
+      "parameters": {
+        "search_criteria": "images",
+        "search_path": "C:\\Users\\X1 CARBON\\Downloads"
+      },
+      "nlu_notes": "direct_search_in"
     }
   ],
-  "last_command_status": null,
-  "last_action": null,
-  "last_parameters": null
+  "last_command_status": "handler_executed",
+  "last_action": "search_files",
+  "last_parameters": {
+    "search_criteria": "images",
+    "search_path": "C:\\Users\\X1 CARBON\\Downloads"
+  }
 }

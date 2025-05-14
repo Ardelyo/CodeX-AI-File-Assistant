@@ -1,4 +1,3 @@
-
 import os
 import re
 
@@ -210,3 +209,43 @@ def parse_direct_move(user_input: str) -> dict | None:
                 "nlu_method": "direct_move_v1"
             }
     return None
+
+# --- ADD THIS FUNCTION ---
+def try_all_direct_parsers(user_input: str, session_ctx: dict) -> dict | None:
+    """
+    Tries all available direct parsers in a predefined order.
+    Returns the result of the first successful parser, or None if none match.
+    """
+    # Order matters: more specific or common patterns first.
+    # This order is an example and might need tuning based on observed conflicts or priorities.
+    parsers_to_try = [
+        # More specific commands first
+        {"name": "move", "func": parse_direct_move, "needs_ctx": False},
+        {"name": "activity_log", "func": parse_direct_activity_log, "needs_ctx": False},
+        # Commands that often take explicit paths or context
+        {"name": "summarize", "func": parse_direct_summarize, "needs_ctx": True},
+        {"name": "organize", "func": parse_direct_organize, "needs_ctx": True},
+        # Search and list can be more general
+        {"name": "search", "func": parse_direct_search, "needs_ctx": False}, # Search before list if list can be too greedy
+        {"name": "list", "func": parse_direct_list, "needs_ctx": True},
+        # Add new direct parsers here, considering their specificity and argument needs
+    ]
+
+    for parser_info in parsers_to_try:
+        try:
+            if parser_info["needs_ctx"]:
+                result = parser_info["func"](user_input, session_ctx)
+            else:
+                result = parser_info["func"](user_input)
+            
+            if result:
+                # For debugging, you can uncomment the line below:
+                # print(f"DEBUG: Direct parser '{parser_info['name']}' matched: {result}")
+                return result
+        except Exception as e:
+            # Optionally log or print if a specific parser fails unexpectedly
+            # print(f"DEBUG: Error in direct parser '{parser_info['name']}': {e}")
+            pass # Continue to the next parser
+            
+    return None
+# --- END OF ADDED FUNCTION ---

@@ -1,13 +1,13 @@
-
-```
+<div align="center">
+  <pre>
   ██████╗ ██████╗ ██████╗ ███████╗██╗  ██╗
  ██╔════╝██╔═══██╗██╔══██╗██╔════╝╚██╗██╔╝
  ██║     ██║   ██║██║  ██║█████╗   ╚███╔╝ 
  ██║     ██║   ██║██║  ██║██╔══╝   ██╔██╗ 
  ╚██████╗╚██████╔╝██████╔╝███████╗██╔╝ ██╗
   ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝
-```
-</p>
+  </pre>
+</div>
 
 <h1 align="center">CodeX AI File Assistant</h1>
 
@@ -30,24 +30,43 @@
 
 <p align="center">
   <img alt="Python Version" src="https://img.shields.io/badge/python-3.9+-4B8BBE.svg?style=for-the-badge&logo=python&logoColor=white">
-  <img alt="License" src="https://img.shields.io/badge/license-MIT-brightgreen.svg?style=for-the-badge"> 
-  <img alt="Status" src="https://img.shields.io/badge/status-beta%20(v1.8.0)-orange.svg?style=for-the-badge">
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-22c55e.svg?style=for-the-badge&logo=opensourceinitiative&logoColor=white"> 
+  <img alt="Status" src="https://img.shields.io/badge/status-beta%20(v1.8.0)-ff9800.svg?style=for-the-badge&logo=statuspage&logoColor=white">
+</p>
+<p align="center">
+  <img alt="Built with AI" src="https://img.shields.io/badge/Built%20with-AI-8A2BE2.svg?style=for-the-badge&logo=openai&logoColor=white">
+  <img alt="Unix Series" src="https://img.shields.io/badge/Unix%20Series-Project%20by%20Ardelyo-9370DB.svg?style=for-the-badge&logo=linux&logoColor=white">
+  <img alt="Made in Indonesia" src="https://img.shields.io/badge/Made%20in-Indonesia%20%F0%9F%87%AE%F0%9F%87%A9-red.svg?style=for-the-badge&logoColor=white">
 </p>
 
 <div align="center">
+  <img src="https://img.shields.io/badge/Ollama-8e44ad?style=flat-square&logo=llama&logoColor=white" alt="Ollama">
+  <img src="https://img.shields.io/badge/Local%20AI-00c853?style=flat-square&logo=chip&logoColor=white" alt="LocalAI">
+  <img src="https://img.shields.io/badge/Terminal%20UI-2d3748?style=flat-square&logo=windowsterminal&logoColor=white" alt="TerminalUI">
+</div>
 
-═══════════════════════════ ◆ ═══════════════════════════
+<div align="center">
+  <br/>
+  <img src="https://img.shields.io/badge/%F0%9F%94%92%20Privacy%20First-No%20Cloud%20Required-00b0ff" alt="Privacy First">
+  <br/><br/>
+</div>
+
+<div align="center">
+  <pre>╔════════════════════════════ ⊹ ════════════════════════════╗</pre>
 </div>
 
 ## 🌟 Overview
+
+This project is proudly part of the **Unix Series**, a collection of projects by Ardellio Satria Anindito (Ardelyo). The series aims to demonstrate that dedicated individuals, leveraging creativity and modern tools like AI, can develop impactful and innovative solutions. It champions the collaborative potential of human ingenuity augmented by artificial intelligence, showing how these forces combined can make a big difference.
+
+**A Note on AI Usage:** Artificial intelligence in the Unix Series is utilized as a specific tool to enhance capabilities and constitutes a focused part of the development process. This series emphasizes AI as a collaborator, not a replacement, and does not support ideologies of job displacement or unchecked AI dominance.
 
 **CodeX AI File Assistant** is a sophisticated command-line utility engineered to revolutionize your interaction with the local file system. By harnessing the power of locally-run Large Language Models (LLMs) via Ollama, CodeX offers an intuitive, natural language interface for managing, understanding, and organizing your digital assets with unprecedented ease and privacy.
 
 This project represents a dedicated exploration into applied artificial intelligence and system utilities, developed with passion and perseverance by **Ardellio Satria Anindito** during the 9th grade (2023-2025).
 
 <div align="center">
-
-═══════════════════════════ ◆ ═══════════════════════════
+  <pre>╚════════════════════════════ ⊹ ════════════════════════════╝</pre>
 </div>
 
 ## ✨ Features
@@ -73,8 +92,7 @@ CodeX empowers users with a suite of intelligent capabilities:
 *   🔒 **Privacy First:** All file processing and AI computations occur entirely on your local machine, ensuring your data remains confidential.
 
 <div align="center">
-
-═══════════════════════════ ◆ ═══════════════════════════
+  <pre>╔════════════════════════════ ⊹ ════════════════════════════╗</pre>
 </div>
 
 ## 💡 Concept & Workflow
@@ -82,55 +100,52 @@ CodeX empowers users with a suite of intelligent capabilities:
 CodeX operates through a streamlined, intelligent workflow visually represented below:
 
 <div align="center">
-
-```
-                 +---------------------------+
-                 |      User Typed Input     |
-                 | (e.g., "summarize doc.txt")|
-                 +-------------+-------------+
-                               |
-                               v
-                 +---------------------------+
-                 |   Direct Parser Attempt   |
-                 | (Regex for common commands)|
-                 +-------------+-------------+
-                               |
-                 No Match /    | Matched
-                 Complex Query |
-                               v
-                 +---------------------------+     +---------------------+
-                 |    LLM NLU & Intent       | --> |   Session Context   |
-                 | (Ollama: gemma3:1b etc.)  | <-- | (Last file, folder) |
-                 +-------------+-------------+     +---------------------+
-                               |
-                               v
-                 +---------------------------+
-                 |   Action Dispatcher       |
-                 | (Identified Action & Params)|
-                 +-------------+-------------+
-                               |
-          +--------------------+--------------------+
-          |                    |                    |
-          v                    v                    v
-+-------------------+  +-------------------+  +----------------------+
-| File System Tools |  |   LLM Content     |  | LLM Org. Plan Gen.   |
-| (Read, List, Move)|  | (Summarize, Q&A)  |  | (or Python Heuristic)|
-+-------------------+  +-------------------+  +----------------------+
-          |                    |                    | (Plan for Review)
-          +--------------------+--------------------+
-                               |
-                               v
-                 +---------------------------+
-                 |   Execute & Display       |
-                 | (Rich CLI Output, Progress)|
-                 +-------------+-------------+
-                               |
-                               v
-                 +---------------------------+     +---------------------+
-                 |      Activity Logger      | --> | activity_log.jsonl  |
-                 +---------------------------+     +---------------------+
-```
-
+<pre>
+                 ╭──────────────────────────╮
+                 │      User Typed Input     │
+                 │ (e.g., "summarize doc.txt")│
+                 ╰────────────┬─────────────╯
+                              ↓
+                 ╭──────────────────────────╮
+                 │   Direct Parser Attempt   │
+                 │ (Regex for common commands)│
+                 ╰────────────┬─────────────╯
+                              │
+                No Match /    │ Matched
+                Complex Query │
+                              ↓
+     ╭──────────────────────────╮     ╭────────────────────╮
+     │    LLM NLU & Intent       │ ──→ │   Session Context   │
+     │ (Ollama: gemma3:1b etc.)  │ ←── │ (Last file, folder) │
+     ╰────────────┬─────────────╯     ╰────────────────────╯
+                  │
+                  ↓
+     ╭──────────────────────────╮
+     │   Action Dispatcher       │
+     │ (Identified Action & Params)│
+     ╰────────────┬─────────────╯
+                  │
+     ┌────────────┼────────────┐
+     │            │            │
+     ↓            ↓            ↓
+╭─────────────╮ ╭─────────────╮ ╭───────────────────╮
+│File System  │ │ LLM Content │ │LLM Org. Plan Gen. │
+│(Read, List) │ │(Summarize)  │ │(Python Heuristic) │
+╰──────┬──────╯ ╰──────┬──────╯ ╰─────────┬─────────╯
+       │               │                  │
+     ┌─┴───────────────┴──────────────────┘
+     │
+     ↓
+╭─────────────────────────╮
+│   Execute & Display     │
+│ (Rich CLI Output)       │
+╰────────────┬────────────╯
+             │
+             ↓
+╭─────────────────────────╮     ╭────────────────────╮
+│      Activity Logger     │ ──→ │ activity_log.jsonl │
+╰─────────────────────────╯     ╰────────────────────╯
+</pre>
 </div>
 
 1.  ⌨️ **User Input:** You articulate your file management needs in natural language.
@@ -140,13 +155,25 @@ CodeX operates through a streamlined, intelligent workflow visually represented 
 5.  🖥️ **Output & Logging:** Results are displayed; actions are logged, and session context is updated.
 
 <div align="center">
-
-═══════════════════════════ ◆ ═══════════════════════════
+  <pre>╚════════════════════════════ ⊹ ════════════════════════════╝</pre>
 </div>
 
 ## 🛠️ Technology Stack
 
 CodeX is built upon a foundation of modern and powerful technologies:
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center"><img src="https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white"/></td>
+      <td align="center"><img src="https://img.shields.io/badge/Ollama-Local%20LLMs-674EA7?style=for-the-badge&logo=llama&logoColor=white"/></td>
+    </tr>
+    <tr>
+      <td align="center"><img src="https://img.shields.io/badge/Rich-CLI%20Enhancement-00875F?style=for-the-badge&logo=windowsterminal&logoColor=white"/></td>
+      <td align="center"><img src="https://img.shields.io/badge/JSON-Data%20Storage-000000?style=for-the-badge&logo=json&logoColor=white"/></td>
+    </tr>
+  </table>
+</div>
 
 *   🐍 **Core Language:** Python (3.9+)
 *   🧠 **AI Engine:** Local Large Language Models (LLMs)
@@ -157,8 +184,7 @@ CodeX is built upon a foundation of modern and powerful technologies:
 *   💾 **Data Persistence:** JSON for session context (`session_context.json`) and activity logs (`activity_log.jsonl`).
 
 <div align="center">
-
-═══════════════════════════ ◆ ═══════════════════════════
+  <pre>╔════════════════════════════ ⊹ ════════════════════════════╗</pre>
 </div>
 
 ## 📋 Prerequisites
@@ -173,17 +199,20 @@ Before you begin, ensure your system meets the following requirements:
     *   Pull a model using: `ollama pull gemma:2b` (replace with your preferred model).
 
 <div align="center">
-
-═══════════════════════════ ◆ ═══════════════════════════
+  <pre>╚════════════════════════════ ⊹ ════════════════════════════╝</pre>
 </div>
 
 ## 🚀 Installation & Setup
+
+<div align="center">
+  <img src="https://img.shields.io/badge/Setup%20Instructions-2d3748?style=flat-square&logo=readthedocs&logoColor=white" alt="Setup">
+</div>
 
 Follow these steps to get CodeX up and running:
 
 1.  **Clone the Repository:**
     ```bash
-    git clone https://github.com/Ardelyo/CodeX-AI-File-Assistant.git # Replace with your actual repository URL
+    git clone https://github.com/Ardelyo/CodeX-AI-File-Assistant.git
     cd CodeX-AI-File-Assistant
     ```
 
@@ -205,11 +234,14 @@ Follow these steps to get CodeX up and running:
     *   **Crucial:** Set `OLLAMA_MODEL` to the exact name of the LLM model you have pulled via Ollama (e.g., `gemma:2b`, `llama3:8b`).
 
 <div align="center">
-
-═══════════════════════════ ◆ ═══════════════════════════
+  <pre>╔════════════════════════════ ⊹ ════════════════════════════╗</pre>
 </div>
 
 ## 💻 Usage
+
+<div align="center">
+  <img src="https://img.shields.io/badge/%F0%9F%96%A5%EF%B8%8F%20Terminal%20Commands-2d3748?style=flat-square&logo=powershell&logoColor=white" alt="Terminal Commands">
+</div>
 
 1.  **Ensure Ollama is Running:** Start the Ollama service if it's not already active.
 2.  **Launch CodeX AI File Assistant:**
@@ -220,24 +252,47 @@ Follow these steps to get CodeX up and running:
 4.  Type `help` to view a list of example commands and interaction patterns.
 5.  To exit, type `quit` or `exit`.
 
-**Example Interactions:**
-
-*   `summarize "reports/Q4_FinancialAnalysis.docx"`
-*   `what does "main_cli.py" say about session context?`
-*   `list contents of "/usr/local/bin"`
-*   `search for markdown files containing 'ollama setup' in "~/dev/projects/CodeX"`
-*   `organize "Downloads" by file extension`
-*   `organize this folder by the names` (tries LLM, then Python heuristic for first-letter sorting)
-*   `move item 3 to "../archive"` (after a list or search)
-*   `show my last 10 activities`
-*   `redo last organization task`
+<div align="center">
+  <table>
+    <tr>
+      <th>Example Commands</th>
+    </tr>
+    <tr>
+      <td><code>summarize "reports/Q4_FinancialAnalysis.docx"</code></td>
+    </tr>
+    <tr>
+      <td><code>what does "main_cli.py" say about session context?</code></td>
+    </tr>
+    <tr>
+      <td><code>list contents of "/usr/local/bin"</code></td>
+    </tr>
+    <tr>
+      <td><code>search for markdown files containing 'ollama setup'</code></td>
+    </tr>
+    <tr>
+      <td><code>organize "Downloads" by file extension</code></td>
+    </tr>
+    <tr>
+      <td><code>move item 3 to "../archive"</code> (after a list or search)</td>
+    </tr>
+    <tr>
+      <td><code>show my last 10 activities</code></td>
+    </tr>
+    <tr>
+      <td><code>redo last organization task</code></td>
+    </tr>
+  </table>
+</div>
 
 <div align="center">
-
-═══════════════════════════ ◆ ═══════════════════════════
+  <pre>╚════════════════════════════ ⊹ ════════════════════════════╝</pre>
 </div>
 
 ## 🗺️ Roadmap (Future Enhancements)
+
+<div align="center">
+  <img src="https://img.shields.io/badge/Future%20Enhancements-2962ff?style=flat-square&logo=trello&logoColor=white" alt="Future Enhancements">
+</div>
 
 CodeX is an evolving project with a vision for continued growth:
 
@@ -253,11 +308,14 @@ CodeX is an evolving project with a vision for continued growth:
 *   **GUI Development:** Explore the creation of a graphical user interface for broader accessibility.
 
 <div align="center">
-
-═══════════════════════════ ◆ ═══════════════════════════
+  <pre>╔════════════════════════════ ⊹ ════════════════════════════╗</pre>
 </div>
 
-##🤝 Contributing
+## 🤝 Contributing
+
+<div align="center">
+  <img src="https://img.shields.io/badge/Contributions%20Welcome-0a66c2?style=flat-square&logo=github&logoColor=white" alt="Contributions Welcome">
+</div>
 
 Contributions are highly valued and welcomed! If you are passionate about AI, file systems, or CLI tool development, consider contributing to CodeX. Areas for contribution include:
 
@@ -271,62 +329,107 @@ Contributions are highly valued and welcomed! If you are passionate about AI, fi
 Please create an issue to discuss potential changes or features before submitting a pull request. Standard fork & pull request workflows are encouraged.
 
 <div align="center">
-
-═══════════════════════════ ◆ ═══════════════════════════
+  <pre>╚════════════════════════════ ⊹ ════════════════════════════╝</pre>
 </div>
 
 ## 👤 Creator
 
-This project, **CodeX AI File Assistant**, was conceived and developed by:
+This project, **CodeX AI File Assistant**, was conceived and developed in **Indonesia** by:
 
 <div align="center">
-
-```
-    #############################################
-    #                                           #
-    #      A R D E L L I O   S A T R I A      #
-    #             A N I N D I T O             #
-    #                                           #
-    #           (9th Grade Student)           #
-    #               (2023 - 2025)             #
-    #                                           #
-    #############################################
-```
-
+<pre>
+  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+  ┃                                              ┃
+  ┃        █▀█ █▀█ █▀▄ █▀▀ █   █▄█ █▀█          ┃
+  ┃        █▀█ █▀▄ █ █ █▀▀ █    █  █ █          ┃
+  ┃        ▀ ▀ ▀ ▀ ▀▀  ▀▀▀ ▀▀▀  ▀  ▀▀▀          ┃
+  ┃                                              ┃
+  ┃         █▀ █▀█ ▀█▀ █▀█ █ █▀█                ┃
+  ┃         ▄█ █▀█  █  █▀▄ █ █▀█                ┃
+  ┃                                              ┃
+  ┃       █▀█ █▄ █ █ █▄ █ █▀▄ █ ▀█▀ █▀█         ┃
+  ┃       █▀█ █ ▀█ █ █ ▀█ █ █ █  █  █ █         ┃
+  ┃                                              ┃
+  ┃             (9th Grade Student)              ┃
+  ┃               (2023 - 2025)                  ┃
+  ┃                                              ┃
+  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+</pre>
 </div>
 
-This endeavor was undertaken with dedication and a passion for exploring the intersection of artificial intelligence and practical software utilities.
-
-*   Connect with Ardellio:
-    *   GitHub: [@Ardelyo](https://github.com/Ardelyo)
-    *   *(Feel free to add other links like LinkedIn or a personal website if you have them)*
+This endeavor was undertaken with dedication and a passion for exploring the intersection of artificial intelligence and practical software utilities, as part of the **Unix Series**.
 
 <div align="center">
+  <a href="https://github.com/Ardelyo">
+    <img src="https://img.shields.io/badge/GitHub-@Ardelyo-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub">
+  </a>
+</div>
 
-═══════════════════════════ ◆ ═══════════════════════════
+<div align="center">
+  <pre>╔════════════════════════════ ⊹ ════════════════════════════╗</pre>
 </div>
 
 ## 📜 License
 
+<div align="center">
+  <img src="https://img.shields.io/badge/License-MIT-22c55e?style=flat-square&logo=opensourceinitiative&logoColor=white" alt="License: MIT">
+</div>
+
 This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
-*(Ensure you have a `LICENSE` file containing the MIT License text in your repository).*
 
 <div align="center">
-
-═══════════════════════════ ◆ ═══════════════════════════
+  <pre>╚════════════════════════════ ⊹ ════════════════════════════╝</pre>
 </div>
 
 ## 🙏 Acknowledgements
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <a href="https://ollama.ai">
+          <img src="https://img.shields.io/badge/Ollama-Team-674EA7?style=flat-square&logo=llama&logoColor=white" alt="Ollama Team">
+        </a>
+      </td>
+      <td align="center">
+        <a href="https://github.com/Textualize/rich">
+          <img src="https://img.shields.io/badge/Rich-Library-00875F?style=flat-square&logo=windowsterminal&logoColor=white" alt="Rich Library">
+        </a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <a href="https://github.com/open-source-community">
+          <img src="https://img.shields.io/badge/Open%20Source-Community-ff9800?style=flat-square&logo=opensourceinitiative&logoColor=white" alt="Open Source Community">
+        </a>
+      </td>
+      <td align="center">
+        <a href="https://python.org">
+          <img src="https://img.shields.io/badge/Python-Community-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python Community">
+        </a>
+      </td>
+    </tr>
+  </table>
+</div>
 
 *   The **Ollama** team for making local LLM execution accessible.
 *   The developers of the **Rich** library for enabling beautiful terminal applications.
 *   The broader open-source community for continuous inspiration and tools.
 
 <div align="center">
+  <pre>╔════════════════════════════ ⊹ ════════════════════════════╗</pre>
+</div>
 
-═══════════════════════════ ◆ ═══════════════════════════
+<div align="center">
+  <p><em>A Unix Series Project by Ardelyo</em></p>
+  <img src="https://img.shields.io/badge/%F0%9F%92%BB%20Made%20With%20Passion%20%26%20AI-8A2BE2?style=for-the-badge" alt="Made With Passion & AI">
 </div>
 
 <p align="center">
-  Thank you for exploring CodeX AI File Assistant! Your feedback and contributions are appreciated.
+  <b>Thank you for exploring CodeX AI File Assistant!</b><br>
+  Your feedback and contributions are appreciated.
 </p>
+
+<div align="center">
+  <pre>╚════════════════════════════ ⊹ ════════════════════════════╝</pre>
+</div>

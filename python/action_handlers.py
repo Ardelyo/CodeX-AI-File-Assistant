@@ -16,10 +16,10 @@ from rich.prompt import Confirm # For move_item and redo_activity, propose_organ
 from ollama_connector import OllamaConnector
 from file_utils import get_file_content, move_item as fu_move_item, list_folder_contents as fu_list_folder_contents, search_files_recursive as fu_search_files_recursive
 from activity_logger import log_action, get_recent_activities, get_activity_by_partial_id_or_index, MAX_LOG_ENTRIES_SIMPLE_RETRIEVAL
-from fs_utils import is_path_within_base
-import session_manager # To update session context
-from cli_ui import console, ICONS, print_error, print_success, print_warning, print_info, print_panel_message
-import nlu_processor # For handle_redo_activity -> process_nlu_result
+from .fs_utils import is_path_within_base
+from . import session_manager # To update session context
+from .cli_ui import console, ICONS, print_error, print_success, print_warning, print_info, print_panel_message
+from . import nlu_processor # For handle_redo_activity -> process_nlu_result
 
 # This map will be populated at the end of the file
 _ACTION_HANDLERS_MAP = {}

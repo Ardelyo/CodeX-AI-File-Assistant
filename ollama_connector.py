@@ -24,47 +24,42 @@ class OllamaConnector:
         payload = {"model": self.model, "prompt": prompt_text, "stream": False}
         if is_json_mode: payload["format"] = "json"
         headers = {"Content-Type": "application/json"}
+        response_obj = None # Initialize to handle potential early exceptions
         try:
-            response = requests.post(self.api_generate_url, data=json.dumps(payload), headers=headers, timeout=300)
-            response.raise_for_status()
-            # Ollama with format="json" returns the JSON directly in the 'response' field,
-            # but the field itself is a string containing JSON.
-            # The top-level response from requests.post().json() is the Ollama API response structure.
-            ollama_api_response = response.json()
+            response_obj = requests.post(self.api_generate_url, data=json.dumps(payload), headers=headers, timeout=300)
+            response_obj.raise_for_status()
+            ollama_api_response = response_obj.json()
             if is_json_mode:
-                if "response" in ollama_api_response:
+                if "response" in ollama_api_response and isinstance(ollama_api_response['response'], str):
                     try:
-                        # The actual JSON content from the LLM is a string in ollama_api_response['response']
                         parsed_llm_json = json.loads(ollama_api_response['response'])
-                        # We return the parsed JSON from the LLM, not the whole Ollama API response envelope
                         return parsed_llm_json
                     except json.JSONDecodeError as e:
                         return {"error_type": "json_decode_error_llm", "message": f"Ollama LLM returned invalid JSON string: {e}. Raw: {ollama_api_response['response'][:200]}"}
-                else:
-                    return {"error_type": "json_mode_no_response_field", "message": "Ollama in JSON mode but 'response' field missing."}
-            return ollama_api_response # For non-JSON mode, return the whole API response
+                else: # Should not happen if Ollama respects format="json" and returns a string in 'response'
+                    return {"error_type": "json_mode_unexpected_response_field", "message": f"Ollama in JSON mode but 'response' field is missing or not a string. Full API response: {str(ollama_api_response)[:300]}"}
+            return ollama_api_response
         except requests.exceptions.Timeout:
             return {"error_type": "timeout", "message": f"Ollama request timed out. Prompt: {prompt_text[:100]}..."}
         except requests.exceptions.HTTPError as e:
             error_body = "N/A"
-            # response object might not be available if the error is severe (e.g., connection refused before request object is fully formed)
-            if 'response' in locals() and response is not None:
-                try: error_body = response.json()
-                except json.JSONDecodeError: error_body = response.text[:200]
+            if response_obj is not None:
+                try: error_body = response_obj.json()
+                except json.JSONDecodeError: error_body = response_obj.text[:200]
             return {"error_type": "http_error", "message": f"Ollama HTTP Error: {e}. Response: {error_body}"}
         except requests.exceptions.RequestException as e:
             return {"error_type": "request_error", "message": f"Ollama Request Error: {e}."}
 
     def invoke_llm_for_content(self, main_instruction: str, context_text: str = "") -> str:
         full_prompt = f"{context_text}\n\n---\n\nUser Command: {main_instruction}" if context_text else main_instruction
-        response_data = self._send_request_to_ollama(full_prompt, is_json_mode=False) # Not JSON mode for general content
+        response_data = self._send_request_to_ollama(full_prompt, is_json_mode=False) 
         if response_data and "error_type" in response_data:
             return f"Error: LLM content generation failed. {response_data.get('message', 'Unknown Ollama error')}"
         return response_data.get("response", "").strip() if response_data else "Error: LLM content generation failed (no response)."
 
     def get_intent_and_entities(self, user_input: str, session_context: dict) -> dict:
         context_summary_parts = []
-        if session_context.get('current_directory'): # Added current_directory
+        if session_context.get('current_directory'): 
             context_summary_parts.append(f"- Current working directory: {session_context['current_directory']}")
         if session_context.get('last_referenced_file_path'):
             context_summary_parts.append(f"- Last referenced file: {session_context['last_referenced_file_path']}")
@@ -85,9 +80,9 @@ Always perform the following steps in your reasoning (which you will articulate 
 1.  **Rephrase User's Goal:** Briefly state what you believe the user is trying to achieve.
 2.  **Identify Key Entities:** Extract potential file paths, folder paths, search terms, organizational goals, etc.
 3.  **Contextual Resolution:** Explicitly state how you are using (or not using) the provided session context to resolve ambiguities or infer missing information. For example, if the user says "this file," check 'last_referenced_file_path' or 'current_directory'.
-4.  **Path Inference/Assumption:** If a full path is not given, explain how you are deriving it (e.g., from current directory, context, or a common location like 'Downloads'). If a path is clearly relative (e.g. "./docs", "file.txt"), state that it should be resolved against the current working directory.
+4.  **Path Inference/Assumption:** If a full path is not given, explain how you are deriving it (e.g., from current directory, context, or a common location like 'Downloads'). If a path is clearly relative (e.g. "./docs", "file.txt"), state that it should be resolved against the current working directory. Use placeholders like "__CURRENT_DIR__" or "__FROM_CONTEXT__" if the path is not explicit but implied by context. Use "__MISSING__" if a path is needed but genuinely not inferable.
 5.  **Action Determination:** Based on the above, determine the most appropriate single action from the list below.
-6.  **Parameter Finalization:** List the parameters required for that action. Path parameters should be the string provided by the user if explicit, or a placeholder like "__FROM_CONTEXT__" or "__CURRENT_DIR__" if inferred.
+6.  **Parameter Finalization:** List the parameters required for that action. Path parameters should be the string provided by the user if explicit, or one of the placeholders if inferred.
 7.  **Ambiguity Check:** If, after all reasoning, a critical piece of information (especially a path for an action like move or summarize) is still missing or highly ambiguous, set 'clarification_needed' to true and formulate a specific question. Do NOT guess if confidence is low on critical items.
 
 Available actions and their parameters:
@@ -122,7 +117,7 @@ Session Context:
 Assistant JSON Output:
 ```json
 {{
-  "chain_of_thought": "1. User's Goal: Summarize a recently accessed file implicitly referred to as 'the report I just looked at'.\\n2. Key Entities: 'report', 'summarize', implicit reference.\\n3. Contextual Resolution: User said 'just looked at', so I will use 'Last referenced file' from context: /user/docs/Q3_financial_report.docx.\\n4. Path Inference: The path is directly from context.\\n5. Action Determination: The action is 'summarize_file'.\\n6. Parameter Finalization: file_path is /user/docs/Q3_financial_report.docx.\\n7. Ambiguity Check: No major ambiguity, path seems clear from context.",
+  "chain_of_thought": "1. User's Goal: Summarize a recently accessed file implicitly referred to as 'the report I just looked at'.\\n2. Key Entities: 'report', 'summarize', implicit reference.\\n3. Contextual Resolution: User said 'just looked at', so I will use 'Last referenced file' from context: /user/docs/Q3_financial_report.docx. This is an absolute path.\\n4. Path Inference: The path is directly from context.\\n5. Action Determination: The action is 'summarize_file'.\\n6. Parameter Finalization: file_path is /user/docs/Q3_financial_report.docx.\\n7. Ambiguity Check: No major ambiguity, path seems clear from context.",
   "action": "summarize_file",
   "parameters": {{
     "file_path": "/user/docs/Q3_financial_report.docx"
@@ -140,15 +135,15 @@ Session Context:
 
 Assistant JSON Output:
 ```json
-
 {{
-  "chain_of_thought": "1. User's Goal: Search for text files containing 'project alpha' within a specific 'main dev folder'.\\n2. Key Entities: 'text files', 'project alpha', 'main dev folder'.\\n3. Contextual Resolution: 'main dev folder' is not explicitly in context. Current directory is '/user/projects/project_beta', which might not be the 'main dev folder'.\\n4. Path Inference: The path for 'main dev folder' is ambiguous. I cannot reliably guess it.\\n5. Action Determination: The core action seems to be 'search_files'.\\n6. Parameter Finalization: search_term is 'project alpha', file_type could be 'txt' (implied by 'text files'). However, 'search_path' for 'main dev folder' is missing.\\n7. Ambiguity Check: The location of 'main dev folder' is critical and ambiguous. Clarification is needed.",
+  "chain_of_thought": "1. User's Goal: Search for text files containing 'project alpha' within a specific 'main dev folder'.\\n2. Key Entities: 'text files', 'project alpha', 'main dev folder'.\\n3. Contextual Resolution: 'main dev folder' is not explicitly in context. Current directory is '/user/projects/project_beta', which might not be the 'main dev folder'.\\n4. Path Inference: The path for 'main dev folder' is ambiguous. I cannot reliably guess it and it's not described as relative to CWD.\\n5. Action Determination: The core action seems to be 'search_files'.\\n6. Parameter Finalization: search_criteria is 'text files about \\'project alpha\\''. 'search_path' is '__MISSING__'.\\n7. Ambiguity Check: The location of 'main dev folder' is critical and ambiguous. Clarification is needed.",
   "action": "search_files",
   "parameters": {{
-    "search_criteria": "text files about 'project alpha'"
+    "search_criteria": "text files about 'project alpha'",
+    "search_path": "__MISSING__"
   }},
   "clarification_needed": true,
-  "suggested_question": "Which folder do you consider your 'main dev folder' for this search?",
+  "suggested_question": "Which folder do you consider your 'main dev folder' for this search? Please provide a full path or path relative to your current directory.",
   "nlu_method": "llm_direct_nlu"
 }}
 ```
@@ -161,7 +156,7 @@ Session Context:
 Assistant JSON Output:
 ```json
 {{
-  "chain_of_thought": "1. User's Goal: List contents of the current directory.\\n2. Key Entities: 'this directory'.\\n3. Contextual Resolution: 'this directory' refers to the 'Current working directory' from context: /user/documents/reports.\\n4. Path Inference: Path is directly from context, can use '__CURRENT_DIR__'.\\n5. Action Determination: Action is 'list_folder_contents'.\\n6. Parameter Finalization: folder_path is '__CURRENT_DIR__'.\\n7. Ambiguity Check: No major ambiguity.",
+  "chain_of_thought": "1. User's Goal: List contents of the current directory.\\n2. Key Entities: 'this directory'.\\n3. Contextual Resolution: 'this directory' refers to the 'Current working directory' from context: /user/documents/reports.\\n4. Path Inference: Path is directly from context, so I will use '__CURRENT_DIR__'.\\n5. Action Determination: Action is 'list_folder_contents'.\\n6. Parameter Finalization: folder_path is '__CURRENT_DIR__'.\\n7. Ambiguity Check: No major ambiguity.",
   "action": "list_folder_contents",
   "parameters": {{
     "folder_path": "__CURRENT_DIR__"
@@ -174,8 +169,6 @@ Assistant JSON Output:
 ---
 END OF EXAMPLES.
 """
-        # This prompt_content structure is crucial for Ollama when format: "json" is used.
-        # The user input part should be minimal to let the system prompt dominate.
         prompt_for_llm = f"{system_prompt}\nUser Input: \"{user_input}\"\n{context_summary}\nAssistant JSON Output:"
 
         response_data = self._send_request_to_ollama(prompt_for_llm, is_json_mode=True)
@@ -183,28 +176,19 @@ END OF EXAMPLES.
         if not response_data:
             return {
                 "chain_of_thought": "Error: No response from LLM.",
-                "action": "unknown",
-                "parameters": {"original_request": user_input, "error_reason": "No LLM NLU response."},
-                "clarification_needed": False,
-                "suggested_question": "",
-                "nlu_method": "llm_no_response"
+                "action": "unknown", "parameters": {"original_request": user_input, "error_reason": "No LLM NLU response."},
+                "clarification_needed": False, "suggested_question": "", "nlu_method": "llm_no_response"
             }
 
         if "error_type" in response_data:
             error_message = response_data.get("message", "LLM NLU request failed due to an error.")
             return {
                 "chain_of_thought": f"Error during NLU: {error_message}",
-                "action": "unknown",
-                "parameters": {"original_request": user_input, "error_reason": error_message},
-                "clarification_needed": False,
-                "suggested_question": "",
-                "nlu_method": f"llm_{response_data.get('error_type', 'request_error')}"
+                "action": "unknown", "parameters": {"original_request": user_input, "error_reason": error_message},
+                "clarification_needed": False, "suggested_question": "", "nlu_method": f"llm_{response_data.get('error_type', 'request_error')}"
             }
         
-        # At this point, response_data should be the parsed JSON from the LLM
         parsed_llm_json = response_data
-
-        # Validate required fields
         required_keys = ["chain_of_thought", "action", "parameters", "clarification_needed", "suggested_question", "nlu_method"]
         missing_keys = [key for key in required_keys if key not in parsed_llm_json]
 
@@ -212,23 +196,18 @@ END OF EXAMPLES.
             error_detail = f"LLM NLU response missing required keys: {', '.join(missing_keys)}. Response: {str(parsed_llm_json)[:200]}"
             return {
                 "chain_of_thought": f"Error: {error_detail}",
-                "action": "unknown",
-                "parameters": {"original_request": user_input, "error_reason": error_detail},
-                "clarification_needed": False,
-                "suggested_question": "",
-                "nlu_method": "llm_incomplete_response"
+                "action": "unknown", "parameters": {"original_request": user_input, "error_reason": error_detail},
+                "clarification_needed": False, "suggested_question": "", "nlu_method": "llm_incomplete_response"
             }
         
-        # Add original user input to parameters for logging/debugging if not already there
         if "original_request" not in parsed_llm_json["parameters"]:
             parsed_llm_json["parameters"]["original_request_for_action"] = user_input
 
         return parsed_llm_json
 
-
-    def check_content_match(self, file_content: str, criteria_description: str) -> bool:
+    def check_content_match(self, file_content: str, criteria_description: str) -> bool: # Unchanged
         if not file_content: return False
-        MAX_CONTENT_FOR_CHECK = 3500 # Consider making this configurable
+        MAX_CONTENT_FOR_CHECK = 3500 
         prompt = f"""
         File content (potentially truncated):
         --- FILE CONTENT START ---
@@ -242,7 +221,7 @@ END OF EXAMPLES.
         if response_data: return "YES" in response_data.get("response", "").strip().upper()
         return False
 
-    def generate_organization_plan_llm(self, items_list_str: str, user_goal_str: str, base_path_for_plan: str) -> (list | None):
+    def generate_organization_plan_llm(self, items_list_str: str, user_goal_str: str, base_path_for_plan: str) -> (list | None): # Unchanged
         example_images_folder = os.path.join(base_path_for_plan, "Images_Organized")
         example_photo_source = os.path.join(base_path_for_plan, "holiday_photo.jpg")
         example_photo_dest = os.path.join(example_images_folder, "holiday_photo.jpg")
@@ -312,18 +291,12 @@ Example for user_goal_str: "the names" (using 'first_letter_folder_organization'
 
 Your JSON plan (must be an array):
 """
-        # This is a JSON request to the LLM.
         response_data = self._send_request_to_ollama(planning_meta_prompt, is_json_mode=True)
         
         if not response_data or "error_type" in response_data:
-            return None # Error occurred or no response
+            return None 
         
-        # response_data here is already the parsed JSON list from the LLM
-        # due to the changes in _send_request_to_ollama for is_json_mode=True
         if isinstance(response_data, list):
             return response_data
         else:
-            # If it's not a list, it's an unexpected format from the LLM (e.g. LLM returned an error object as JSON)
-            # Or if the LLM failed to adhere to the "return an array" instruction.
             return None
-

@@ -1291,31 +1291,6 @@
   ],
   "command_history": [
     {
-      "timestamp": "2025-05-10T13:38:29.770575+00:00",
-      "action": "summarize_file",
-      "parameters": {
-        "file_path": "c:\\users\\x1 carbon\\coding\\2505.03335v2.pdf"
-      },
-      "nlu_notes": "direct_summarize"
-    },
-    {
-      "timestamp": "2025-05-10T14:05:54.386114+00:00",
-      "action": "list_folder_contents",
-      "parameters": {
-        "folder_path": "c:\\users\\x1 carbon\\coding"
-      },
-      "nlu_notes": "direct_list"
-    },
-    {
-      "timestamp": "2025-05-10T14:06:11.267092+00:00",
-      "action": "propose_and_execute_organization",
-      "parameters": {
-        "target_path_or_context": "c:\\users\\x1 carbon\\coding",
-        "organization_goal": "name"
-      },
-      "nlu_notes": "direct_organize_v2"
-    },
-    {
       "timestamp": "2025-05-10T14:12:42.504462+00:00",
       "action": "propose_and_execute_organization",
       "parameters": {
@@ -1465,12 +1440,36 @@
         "search_path": "C:\\Users\\X1 CARBON\\Downloads"
       },
       "nlu_notes": "direct_search_in"
+    },
+    {
+      "timestamp": "2025-05-14T08:08:43.892036+00:00",
+      "action": "help",
+      "parameters": {},
+      "nlu_notes": "user_typed"
+    },
+    {
+      "timestamp": "2025-05-14T08:09:17.047003+00:00",
+      "action": "search_files",
+      "parameters": {
+        "search_criteria": "images",
+        "search_path": "C:\\Users\\X1 CARBON\\Downloads"
+      },
+      "nlu_notes": "direct_search_in"
+    },
+    {
+      "timestamp": "2025-05-14T08:09:30.693063+00:00",
+      "action": "propose_and_execute_organization",
+      "parameters": {
+        "target_path_or_context": "C:\\Users\\X1 CARBON\\Downloads",
+        "organization_goal": "their type into a folder"
+      },
+      "nlu_notes": "direct_organize_v4"
     }
   ],
   "last_command_status": "handler_executed",
-  "last_action": "search_files",
+  "last_action": "propose_and_execute_organization",
   "last_parameters": {
-    "search_criteria": "images",
-    "search_path": "C:\\Users\\X1 CARBON\\Downloads"
+    "target_path_or_context": "C:\\Users\\X1 CARBON\\Downloads",
+    "organization_goal": "their type into a folder"
   }
 }

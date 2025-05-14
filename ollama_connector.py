@@ -1,5 +1,4 @@
 import os
-import re
 import requests
 import json
 from config import OLLAMA_API_BASE_URL, OLLAMA_MODEL
@@ -28,12 +27,28 @@ class OllamaConnector:
         try:
             response = requests.post(self.api_generate_url, data=json.dumps(payload), headers=headers, timeout=300)
             response.raise_for_status()
-            return response.json()
+            # Ollama with format="json" returns the JSON directly in the 'response' field,
+            # but the field itself is a string containing JSON.
+            # The top-level response from requests.post().json() is the Ollama API response structure.
+            ollama_api_response = response.json()
+            if is_json_mode:
+                if "response" in ollama_api_response:
+                    try:
+                        # The actual JSON content from the LLM is a string in ollama_api_response['response']
+                        parsed_llm_json = json.loads(ollama_api_response['response'])
+                        # We return the parsed JSON from the LLM, not the whole Ollama API response envelope
+                        return parsed_llm_json
+                    except json.JSONDecodeError as e:
+                        return {"error_type": "json_decode_error_llm", "message": f"Ollama LLM returned invalid JSON string: {e}. Raw: {ollama_api_response['response'][:200]}"}
+                else:
+                    return {"error_type": "json_mode_no_response_field", "message": "Ollama in JSON mode but 'response' field missing."}
+            return ollama_api_response # For non-JSON mode, return the whole API response
         except requests.exceptions.Timeout:
             return {"error_type": "timeout", "message": f"Ollama request timed out. Prompt: {prompt_text[:100]}..."}
         except requests.exceptions.HTTPError as e:
             error_body = "N/A"
-            if response is not None:
+            # response object might not be available if the error is severe (e.g., connection refused before request object is fully formed)
+            if 'response' in locals() and response is not None:
                 try: error_body = response.json()
                 except json.JSONDecodeError: error_body = response.text[:200]
             return {"error_type": "http_error", "message": f"Ollama HTTP Error: {e}. Response: {error_body}"}
@@ -42,168 +57,178 @@ class OllamaConnector:
 
     def invoke_llm_for_content(self, main_instruction: str, context_text: str = "") -> str:
         full_prompt = f"{context_text}\n\n---\n\nUser Command: {main_instruction}" if context_text else main_instruction
-        response_data = self._send_request_to_ollama(full_prompt)
+        response_data = self._send_request_to_ollama(full_prompt, is_json_mode=False) # Not JSON mode for general content
         if response_data and "error_type" in response_data:
             return f"Error: LLM content generation failed. {response_data.get('message', 'Unknown Ollama error')}"
         return response_data.get("response", "").strip() if response_data else "Error: LLM content generation failed (no response)."
 
-    def get_intent_and_entities(self, user_prompt: str, session_context: dict = None) -> (dict | None):
-        context_hint_str = ""
-        if session_context:
-            hints = []
-            if session_context.get("last_referenced_file_path"):
-                hints.append(f"last file: '{os.path.basename(session_context['last_referenced_file_path'])}'")
-            if session_context.get("last_folder_listed_path"):
-                hints.append(f"last folder: '{os.path.basename(session_context['last_folder_listed_path'])}'")
-            if session_context.get("last_search_results"):
-                hints.append(f"last search found {len(session_context['last_search_results'])} items")
-            if session_context.get("command_history") and session_context["command_history"]:
-                last_cmd_info = session_context["command_history"][-1]
-                hints.append(f"last command was '{last_cmd_info.get('action', 'unknown')}' with params '{str(last_cmd_info.get('parameters', {}))[:50]}...'")
-            if hints:
-                context_hint_str = f"Contextual Information: {'; '.join(hints)}."
+    def get_intent_and_entities(self, user_input: str, session_context: dict) -> dict:
+        context_summary_parts = []
+        if session_context.get('current_directory'): # Added current_directory
+            context_summary_parts.append(f"- Current working directory: {session_context['current_directory']}")
+        if session_context.get('last_referenced_file_path'):
+            context_summary_parts.append(f"- Last referenced file: {session_context['last_referenced_file_path']}")
+        if session_context.get('last_folder_listed_path'):
+            context_summary_parts.append(f"- Last listed folder: {session_context['last_folder_listed_path']}")
+        if session_context.get('last_search_results'):
+            context_summary_parts.append(f"- Last search produced {len(session_context['last_search_results'])} items.")
         
-        meta_prompt = f"""
-You are an expert AI assistant for file management, information retrieval, and task planning.
-Your primary goal is to identify a SINGLE main action the user wants to perform and extract its necessary parameters.
-Respond ONLY with a valid JSON object.
+        context_summary = "No specific session context available."
+        if context_summary_parts:
+            context_summary = "Current session context:\n" + "\n".join(context_summary_parts)
 
-Available actions and their EXCLUSIVE parameters:
-- "summarize_file": User wants a summary of a specific file.
-  Parameters: "file_path" (string, path to the file).
-- "ask_question_about_file": User is asking about a file or folder.
-  Parameters: "file_path" (string, path to file/folder), "question_text" (string).
-- "list_folder_contents": User wants to list folder contents.
-  Parameters: "folder_path" (string, path to the folder).
-- "move_item": User wants to move a file or folder.
-  Parameters: "source_path" (string), "destination_path" (string).
-- "search_files": User wants to find files/folders. This is the action if keywords like "search", "find", "look for" are prominent and a search subject (e.g., "images", "files containing 'budget'") is mentioned.
-  Parameters: "search_criteria" (string, what to search for), "search_path" (string, where to search, optional).
-- "propose_and_execute_organization": User wants to organize a folder.
-  Parameters: "target_path_or_context" (string, the folder to organize), "organization_goal" (string, e.g., "by type", "by project", optional).
-- "show_activity_log": User wants to see recent activity/log/history.
-  Parameters: "count" (integer, optional, e.g., "last 5 activities").
-- "redo_activity": User wants to redo a previously logged action.
-  Parameters: "activity_identifier" (string, e.g., "last", index, or timestamp).
-- "general_chat": For general conversation or requests not matching other actions.
-  Parameters: "original_request" (string).
-- "unknown": If the request is unclear or cannot be mapped to an action.
-  Parameters: "original_request" (string), "error" (string, optional explanation).
+        system_prompt = f"""
+You are CodeX AI File Assistant, an expert in understanding user requests for file system operations.
+Your task is to analyze the user's input, considering the provided session context, and provide a structured JSON output.
 
-Path Handling:
-- Use "__FROM_CONTEXT__" if the path is implied (e.g., "this file", "it", "here") and should be resolved from session context.
-- Use "__MISSING__" if a path is needed but not provided and not clearly contextual.
+Always perform the following steps in your reasoning (which you will articulate in 'chain_of_thought'):
+1.  **Rephrase User's Goal:** Briefly state what you believe the user is trying to achieve.
+2.  **Identify Key Entities:** Extract potential file paths, folder paths, search terms, organizational goals, etc.
+3.  **Contextual Resolution:** Explicitly state how you are using (or not using) the provided session context to resolve ambiguities or infer missing information. For example, if the user says "this file," check 'last_referenced_file_path' or 'current_directory'.
+4.  **Path Inference/Assumption:** If a full path is not given, explain how you are deriving it (e.g., from current directory, context, or a common location like 'Downloads'). If a path is clearly relative (e.g. "./docs", "file.txt"), state that it should be resolved against the current working directory.
+5.  **Action Determination:** Based on the above, determine the most appropriate single action from the list below.
+6.  **Parameter Finalization:** List the parameters required for that action. Path parameters should be the string provided by the user if explicit, or a placeholder like "__FROM_CONTEXT__" or "__CURRENT_DIR__" if inferred.
+7.  **Ambiguity Check:** If, after all reasoning, a critical piece of information (especially a path for an action like move or summarize) is still missing or highly ambiguous, set 'clarification_needed' to true and formulate a specific question. Do NOT guess if confidence is low on critical items.
 
-CRITICAL RULES:
-1.  Strictly one primary action per request.
-2.  "search_files" is for *finding* items. "search_criteria" is MANDATORY. Do NOT confuse with "summarize_file" or "ask_question_about_file" even if a path is mentioned alongside search terms. If user says "search for python files in /dev", action is "search_files", criteria is "python files", path is "/dev".
-3.  "propose_and_execute_organization": "target_path_or_context" is *what* to organize (the folder). "organization_goal" is *how* (e.g., "by file type", "by date"). Do not mix these. Example: "organize C:/Downloads by type" -> target_path_or_context="C:/Downloads", organization_goal="by type". If goal is missing, it's general.
+Available actions and their parameters:
+- "summarize_file": Parameters: "file_path" (string).
+- "ask_question_about_file": Parameters: "file_path" (string), "question_text" (string).
+- "list_folder_contents": Parameters: "folder_path" (string, can be "__CURRENT_DIR__" or "__FROM_CONTEXT__").
+- "move_item": Parameters: "source_path" (string), "destination_path" (string).
+- "search_files": Parameters: "search_criteria" (string), "search_path" (string, optional, can be "__CURRENT_DIR__" or "__FROM_CONTEXT__").
+- "propose_and_execute_organization": Parameters: "target_path_or_context" (string), "organization_goal" (string, optional).
+- "show_activity_log": Parameters: "count" (integer, optional).
+- "redo_activity": Parameters: "activity_identifier" (string).
+- "general_chat": Parameters: "original_request" (string).
+- "unknown": Parameters: "original_request" (string), "error_reason" (string).
 
-{context_hint_str}
-User Request: "{user_prompt}"
+**OUTPUT FORMAT (Strict JSON):**
+You MUST output a single JSON object with the following fields:
+-   `chain_of_thought`: (string) Your detailed step-by-step reasoning process. Use newline characters (\\n) for readability if needed.
+-   `action`: (string) The single, most appropriate action identified.
+-   `parameters`: (object) A JSON object containing parameters for the identified 'action'.
+-   `clarification_needed`: (boolean) true if critical information is missing or highly ambiguous, otherwise false.
+-   `suggested_question`: (string) If 'clarification_needed' is true, provide a concise, targeted question. Otherwise, an empty string or null.
+-   `nlu_method`: (string) Set this to "llm_direct_nlu".
 
-Examples of correct JSON output:
-- "summarize /tmp/report.txt": {{"action": "summarize_file", "parameters": {{"file_path": "/tmp/report.txt"}}}}
-- "find images in my pictures folder": {{"action": "search_files", "parameters": {{"search_criteria": "images", "search_path": "__FROM_CONTEXT__"}}}}
-- "organize ./downloads_folder by extension": {{"action": "propose_and_execute_organization", "parameters": {{"target_path_or_context": "./downloads_folder", "organization_goal": "by extension"}}}}
-- "organize this folder": {{"action": "propose_and_execute_organization", "parameters": {{"target_path_or_context": "__FROM_CONTEXT__", "organization_goal": null}}}}
-- "show my last 3 activities": {{"action": "show_activity_log", "parameters": {{"count": 3}}}}
-- "move old.log to archive/": {{"action": "move_item", "parameters": {{"source_path": "old.log", "destination_path": "archive/"}}}}
+**FEW-SHOT EXAMPLES:**
+---
+Example 1:
+User Input: "summarize the report I just looked at"
+Session Context:
+- Current working directory: /user/projects
+- Last referenced file: /user/docs/Q3_financial_report.docx
 
-Your JSON response:
+Assistant JSON Output:
+```json
+{{
+  "chain_of_thought": "1. User's Goal: Summarize a recently accessed file implicitly referred to as 'the report I just looked at'.\\n2. Key Entities: 'report', 'summarize', implicit reference.\\n3. Contextual Resolution: User said 'just looked at', so I will use 'Last referenced file' from context: /user/docs/Q3_financial_report.docx.\\n4. Path Inference: The path is directly from context.\\n5. Action Determination: The action is 'summarize_file'.\\n6. Parameter Finalization: file_path is /user/docs/Q3_financial_report.docx.\\n7. Ambiguity Check: No major ambiguity, path seems clear from context.",
+  "action": "summarize_file",
+  "parameters": {{
+    "file_path": "/user/docs/Q3_financial_report.docx"
+  }},
+  "clarification_needed": false,
+  "suggested_question": "",
+  "nlu_method": "llm_direct_nlu"
+}}
+```
+---
+Example 2:
+User Input: "find text files about 'project alpha' in my main dev folder"
+Session Context:
+- Current working directory: /user/projects/project_beta
+
+Assistant JSON Output:
+```json
+
+{{
+  "chain_of_thought": "1. User's Goal: Search for text files containing 'project alpha' within a specific 'main dev folder'.\\n2. Key Entities: 'text files', 'project alpha', 'main dev folder'.\\n3. Contextual Resolution: 'main dev folder' is not explicitly in context. Current directory is '/user/projects/project_beta', which might not be the 'main dev folder'.\\n4. Path Inference: The path for 'main dev folder' is ambiguous. I cannot reliably guess it.\\n5. Action Determination: The core action seems to be 'search_files'.\\n6. Parameter Finalization: search_term is 'project alpha', file_type could be 'txt' (implied by 'text files'). However, 'search_path' for 'main dev folder' is missing.\\n7. Ambiguity Check: The location of 'main dev folder' is critical and ambiguous. Clarification is needed.",
+  "action": "search_files",
+  "parameters": {{
+    "search_criteria": "text files about 'project alpha'"
+  }},
+  "clarification_needed": true,
+  "suggested_question": "Which folder do you consider your 'main dev folder' for this search?",
+  "nlu_method": "llm_direct_nlu"
+}}
+```
+---
+Example 3:
+User Input: "list this directory"
+Session Context:
+- Current working directory: /user/documents/reports
+
+Assistant JSON Output:
+```json
+{{
+  "chain_of_thought": "1. User's Goal: List contents of the current directory.\\n2. Key Entities: 'this directory'.\\n3. Contextual Resolution: 'this directory' refers to the 'Current working directory' from context: /user/documents/reports.\\n4. Path Inference: Path is directly from context, can use '__CURRENT_DIR__'.\\n5. Action Determination: Action is 'list_folder_contents'.\\n6. Parameter Finalization: folder_path is '__CURRENT_DIR__'.\\n7. Ambiguity Check: No major ambiguity.",
+  "action": "list_folder_contents",
+  "parameters": {{
+    "folder_path": "__CURRENT_DIR__"
+  }},
+  "clarification_needed": false,
+  "suggested_question": "",
+  "nlu_method": "llm_direct_nlu"
+}}
+```
+---
+END OF EXAMPLES.
 """
-        response_data = self._send_request_to_ollama(meta_prompt, is_json_mode=True)
+        # This prompt_content structure is crucial for Ollama when format: "json" is used.
+        # The user input part should be minimal to let the system prompt dominate.
+        prompt_for_llm = f"{system_prompt}\nUser Input: \"{user_input}\"\n{context_summary}\nAssistant JSON Output:"
 
-        if response_data and "error_type" in response_data: 
-            return {"action": "unknown", "parameters": {"original_request": user_prompt, "error": response_data.get("message", "LLM NLU request failed")}, "nlu_method": "llm_request_error"}
+        response_data = self._send_request_to_ollama(prompt_for_llm, is_json_mode=True)
+
+        if not response_data:
+            return {
+                "chain_of_thought": "Error: No response from LLM.",
+                "action": "unknown",
+                "parameters": {"original_request": user_input, "error_reason": "No LLM NLU response."},
+                "clarification_needed": False,
+                "suggested_question": "",
+                "nlu_method": "llm_no_response"
+            }
+
+        if "error_type" in response_data:
+            error_message = response_data.get("message", "LLM NLU request failed due to an error.")
+            return {
+                "chain_of_thought": f"Error during NLU: {error_message}",
+                "action": "unknown",
+                "parameters": {"original_request": user_input, "error_reason": error_message},
+                "clarification_needed": False,
+                "suggested_question": "",
+                "nlu_method": f"llm_{response_data.get('error_type', 'request_error')}"
+            }
         
-        if response_data:
-            json_string = response_data.get("response", "{}").strip()
-            try:
-                if json_string.startswith("```json"): json_string = json_string.split("```json", 1)[1].rsplit("```", 1)[0].strip()
-                elif json_string.startswith("```"): json_string = json_string.strip("` \n")
-                json_string = "\n".join(line for line in json_string.splitlines() if not line.strip().startswith("//"))
-                
-                parsed_json = json.loads(json_string)
-                parsed_json["nlu_method"] = "llm_parsed" # Add method note
-                
-                action = parsed_json.get("action")
-                params = parsed_json.get("parameters", {})
-                user_prompt_lower = user_prompt.lower()
+        # At this point, response_data should be the parsed JSON from the LLM
+        parsed_llm_json = response_data
 
-                # L1 NLU Correction: Check for misattributed 'search_criteria' by LLM
-                if action in ["summarize_file", "ask_question_about_file"] and "search_criteria" in params:
-                    new_search_params = {"search_criteria": params["search_criteria"]}
-                    if "search_path" in params: new_search_params["search_path"] = params["search_path"]
-                    elif action == "ask_question_about_file" and params.get("file_path") and params["file_path"] not in ["__MISSING__", "__FROM_CONTEXT__"]:
-                        new_search_params["search_path"] = params["file_path"]
-                    else: new_search_params["search_path"] = "__MISSING__"
-                    
-                    correction_note = (f"NLU L1 Correction (Ollama): LLM chose '{action}' but included 'search_criteria'. "
-                                       f"Re-interpreting as 'search_files'. Original LLM params: {params}. ")
-                    return {"action": "search_files", "parameters": new_search_params, "nlu_correction_note": correction_note, "nlu_method": "llm_corrected_l1"}
+        # Validate required fields
+        required_keys = ["chain_of_thought", "action", "parameters", "clarification_needed", "suggested_question", "nlu_method"]
+        missing_keys = [key for key in required_keys if key not in parsed_llm_json]
 
-                # L2 NLU Correction: If LLM chose summarize/ask, but user_prompt strongly implies search
-                search_trigger_keywords = ["search for", "find files", "look for", "locate files", "search ", "find "]
-                original_prompt_is_searchy = any(keyword in user_prompt_lower for keyword in search_trigger_keywords)
-                if not original_prompt_is_searchy: # Check explicit start if not in general keywords
-                    if user_prompt_lower.startswith("search ") or user_prompt_lower.startswith("find "):
-                        original_prompt_is_searchy = True
-                
-                if action in ["summarize_file", "ask_question_about_file"] and original_prompt_is_searchy:
-                    extracted_criteria = None; extracted_path = None
-                    
-                    match_in = re.search(r"^(?:search|find)\s+(?:for\s+)?(.+?)\s+in\s+(['\"]?)(.+?)\2?$", user_prompt, re.IGNORECASE)
-                    if match_in:
-                        extracted_criteria = match_in.group(1).strip().rstrip("'\" "); extracted_path = match_in.group(3).strip().rstrip("'\" ")
-                    else:
-                        path_pattern_for_no_in = r"""
-                            (?P<path> 
-                                (?:['"])(?P<quoted_path_content>.+?)(?:['"])| 
-                                (?:[a-zA-Z]:\\(?:[^<>:"/\\|?*\s\x00-\x1f]+\\)*[^<>:"/\\|?*\s\x00-\x1f]*?)| 
-                                (?:/(?:[^<>:"/\\|?*\s\x00-\x1f]+/)*[^<>:"/\\|?*\s\x00-\x1f]*?)| 
-                                (?:(?:~|\.|[^<>:"/\\|?*\s\x00-\x1f./\\'"\s][^<>:"/\\|?*\s\x00-\x1f./\\']*)) 
-                            )
-                        """
-                        match_no_in_str = r"^(?:search|find)\s+(?:for\s+)?(?P<criteria>.+?)\s+" + path_pattern_for_no_in.strip().replace("\n", "").replace(" ", "") + r"$"
-                        match_no_in = re.search(match_no_in_str, user_prompt, re.IGNORECASE | re.VERBOSE)
+        if missing_keys:
+            error_detail = f"LLM NLU response missing required keys: {', '.join(missing_keys)}. Response: {str(parsed_llm_json)[:200]}"
+            return {
+                "chain_of_thought": f"Error: {error_detail}",
+                "action": "unknown",
+                "parameters": {"original_request": user_input, "error_reason": error_detail},
+                "clarification_needed": False,
+                "suggested_question": "",
+                "nlu_method": "llm_incomplete_response"
+            }
+        
+        # Add original user input to parameters for logging/debugging if not already there
+        if "original_request" not in parsed_llm_json["parameters"]:
+            parsed_llm_json["parameters"]["original_request_for_action"] = user_input
 
-                        if match_no_in:
-                            extracted_criteria = match_no_in.group("criteria").strip().rstrip("'\" ")
-                            if match_no_in.group("quoted_path_content"): extracted_path = match_no_in.group("quoted_path_content").strip()
-                            else: extracted_path = match_no_in.group("path").strip().rstrip("'\" ")
-                        else: 
-                             match_simple = re.search(r"^(?:search|find)\s+(?:for\s+)?(.+)$", user_prompt, re.IGNORECASE)
-                             if match_simple: extracted_criteria = match_simple.group(1).strip().rstrip("'\" ")
+        return parsed_llm_json
 
-                    final_search_params = {}; correction_prefix = f"NLU L2 Correction (Ollama): LLM chose '{action}' but user prompt ('{user_prompt_lower[:30]}...') implies search."
-                    if extracted_criteria:
-                        final_search_params["search_criteria"] = extracted_criteria
-                        if extracted_path: final_search_params["search_path"] = extracted_path
-                        elif params.get("file_path") and params["file_path"] not in ["__MISSING__", "__FROM_CONTEXT__"]:
-                            final_search_params["search_path"] = params["file_path"]
-                            correction_prefix += f" Used LLM's file_path ('{params['file_path']}') as search_path."
-                        else: final_search_params["search_path"] = "__MISSING__"
-                        
-                        correction_note = f"{correction_prefix} Overriding to 'search_files'. Original LLM params: {params}."
-                        return {"action": "search_files", "parameters": final_search_params, "nlu_correction_note": correction_note, "nlu_method": "llm_corrected_l2_criteria"}
-                    
-                    fallback_search_path = params.get("file_path") if params.get("file_path") not in ["__MISSING__", "__FROM_CONTEXT__"] else "__MISSING__"
-                    correction_note = (f"NLU L2 Fallback (Ollama): {correction_prefix} Regex extraction weak. "
-                                       f"Forcing 'search_files', using LLM's file_path ('{fallback_search_path}') as search_path, and prompting for criteria. Original LLM params: {params}.")
-                    return {
-                        "action": "search_files",
-                        "parameters": {"search_criteria": "__MISSING__", "search_path": fallback_search_path},
-                        "nlu_correction_note": correction_note, "nlu_method": "llm_corrected_l2_fallback"
-                    }
-                return parsed_json
-            except json.JSONDecodeError:
-                return {"action": "unknown", "parameters": {"original_request": user_prompt, "error": f"LLM NLU JSON error. Raw: {json_string[:100]}"}, "nlu_method": "llm_json_decode_error"}
-        return {"action": "unknown", "parameters": {"original_request": user_prompt, "error": "No LLM NLU response."}, "nlu_method": "llm_no_response"}
 
     def check_content_match(self, file_content: str, criteria_description: str) -> bool:
         if not file_content: return False
-        MAX_CONTENT_FOR_CHECK = 3500
+        MAX_CONTENT_FOR_CHECK = 3500 # Consider making this configurable
         prompt = f"""
         File content (potentially truncated):
         --- FILE CONTENT START ---
@@ -211,7 +236,7 @@ Your JSON response:
         --- FILE CONTENT END ---
         Does this content match: "{criteria_description}"? Respond ONLY with YES or NO.
         """
-        response_data = self._send_request_to_ollama(prompt)
+        response_data = self._send_request_to_ollama(prompt, is_json_mode=False)
         if response_data and "error_type" in response_data:
             return False 
         if response_data: return "YES" in response_data.get("response", "").strip().upper()
@@ -287,30 +312,18 @@ Example for user_goal_str: "the names" (using 'first_letter_folder_organization'
 
 Your JSON plan (must be an array):
 """
+        # This is a JSON request to the LLM.
         response_data = self._send_request_to_ollama(planning_meta_prompt, is_json_mode=True)
         
-        if response_data and "error_type" in response_data:
+        if not response_data or "error_type" in response_data:
+            return None # Error occurred or no response
+        
+        # response_data here is already the parsed JSON list from the LLM
+        # due to the changes in _send_request_to_ollama for is_json_mode=True
+        if isinstance(response_data, list):
+            return response_data
+        else:
+            # If it's not a list, it's an unexpected format from the LLM (e.g. LLM returned an error object as JSON)
+            # Or if the LLM failed to adhere to the "return an array" instruction.
             return None
-        
-        if response_data:
-            json_string = response_data.get("response", "[]").strip()
-            try:
-                if json_string.startswith("```json"):
-                    json_string = json_string.split("```json", 1)[1].rsplit("```", 1)[0].strip()
-                elif json_string.startswith("```"):
-                    json_string = json_string.strip("` \n")
-                json_string = "\n".join(line for line in json_string.splitlines() if not line.strip().startswith("//"))
-                
-                if not json_string.strip().startswith("[") or not json_string.strip().endswith("]"):
-                    parsed_plan = []
-                else:
-                    parsed_plan = json.loads(json_string)
 
-                if isinstance(parsed_plan, list):
-                    return parsed_plan
-                else:
-                    return [] 
-            except json.JSONDecodeError:
-                return None 
-        
-        return None

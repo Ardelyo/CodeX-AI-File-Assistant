@@ -61,14 +61,6 @@
   ],
   "command_history": [
     {
-      "timestamp": "2025-05-10T13:34:58.131317+00:00",
-      "action": "list_folder_contents",
-      "parameters": {
-        "folder_path": "c:\\users\\x1 carbon\\downloads\\phone link"
-      },
-      "nlu_notes": "direct_list"
-    },
-    {
       "timestamp": "2025-05-10T13:35:15.269091+00:00",
       "action": "propose_and_execute_organization",
       "parameters": {
@@ -237,6 +229,12 @@
         "action": "summarize_file"
       },
       "nlu_notes": "llm_fallback; IdxRefResolved"
+    },
+    {
+      "timestamp": "2025-05-14T07:47:55.015371+00:00",
+      "action": "help",
+      "parameters": {},
+      "nlu_notes": "user_typed"
     }
   ],
   "last_command_status": null,

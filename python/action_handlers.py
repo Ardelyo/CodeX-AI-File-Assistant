@@ -4,6 +4,7 @@ import os
 import shutil
 import time
 import json # For loading activity log if needed for redo
+import datetime # Added import for datetime
 
 # PDF and DOCX parsing
 try:
@@ -21,8 +22,8 @@ except ImportError:
 # Local project imports
 from . import cli_ui
 from . import cli_constants
-from . import path_resolver
-from . import fs_utils # Assuming you have fs_utils for file operations like list_folder_contents_simple
+# from . import path_resolver # No longer directly called by handlers for resolve_path
+from . import fs_utils
 import activity_logger # For logging results
 
 from rich.table import Table
@@ -33,14 +34,14 @@ from rich.panel import Panel
 from rich.box import ROUNDED
 
 # --- Configuration for Summarization ---
-MAX_CONTENT_LENGTH_FOR_SUMMARY = 20000  # Characters, adjust based on your LLM and typical file sizes
-MAX_ITEMS_TO_DISPLAY_IN_LIST = 50 # For list_folder_contents
+MAX_CONTENT_LENGTH_FOR_SUMMARY = 20000  # Characters
+MAX_ITEMS_TO_DISPLAY_IN_LIST = 50
 
 # === Helper for Content Extraction ===
 def _extract_file_content(resolved_path: str, file_extension: str) -> tuple[str, str, str | None]:
     """
     Extracts content from a file based on its extension.
-    Returns: (content_text, content_source_description, error_message_if_any)
+    Assumes resolved_path is an absolute, existing file path.
     """
     file_content = ""
     content_source = "unknown"
@@ -55,7 +56,7 @@ def _extract_file_content(resolved_path: str, file_extension: str) -> tuple[str,
             doc = fitz.open(resolved_path)
             for page_num in range(len(doc)):
                 page = doc.load_page(page_num)
-                file_content += page.get_text("text") # "text" for plain text
+                file_content += page.get_text("text")
             doc.close()
             if not file_content.strip():
                 error_message = f"Extracted no text from PDF: {os.path.basename(resolved_path)}. The PDF might be image-based or protected."
@@ -80,9 +81,8 @@ def _extract_file_content(resolved_path: str, file_extension: str) -> tuple[str,
         else:
             content_source = "unsupported_type_no_extraction"
             error_message = f"File type '{file_extension}' is not directly supported for content extraction."
-            # For unsupported types, content will remain empty. The LLM can be informed.
 
-    except fitz.fitz.FitxError as e_pdf: # More specific PyMuPDF error
+    except fitz.fitz.FitxError as e_pdf:
         error_message = f"Error processing PDF file {os.path.basename(resolved_path)}: {e_pdf}. It might be corrupted or password-protected."
         content_source = "pdf_processing_error"
     except Exception as e_extraction:
@@ -96,21 +96,28 @@ def _extract_file_content(resolved_path: str, file_extension: str) -> tuple[str,
 
 
 # === Action Handlers ===
+# IMPORTANT ASSUMPTION: All path parameters (file_path, folder_path, search_path, etc.)
+# in the 'parameters' dict are ALREADY RESOLVED TO ABSOLUTE PATHS and basic validation
+# (e.g., existence for sources, type matching for directory/file) has been performed
+# by the nlu_processor.py before these handlers are called.
+# Handlers should still check for None and perform their specific logic.
 
 def handle_summarize_file(connector, parameters: dict):
     """Handles the summarization of a file."""
     activity_logger.log_action("summarize_file", parameters, "pending_execution", "Attempting to summarize file.")
     
-    file_path_param = parameters.get("file_path")
-    if not file_path_param:
+    # Parameter 'file_path' is expected to be an absolute, validated path from nlu_processor
+    resolved_path = parameters.get("file_path")
+
+    if not resolved_path:
         cli_ui.print_error("File path is missing for summarization.", "Summarization Error")
-        activity_logger.update_last_activity_status("failure", "Missing file_path parameter.")
+        activity_logger.update_last_activity_status("failure", "Missing resolved file_path parameter.")
         return
 
-    resolved_path = path_resolver.resolve_path(file_path_param, cli_ui)
-    if not resolved_path or not os.path.isfile(resolved_path):
-        cli_ui.print_error(f"File not found or is not a file: {resolved_path or file_path_param}", "File Error")
-        activity_logger.update_last_activity_status("failure", f"File not found or not a file: {resolved_path or file_path_param}")
+    # nlu_processor should have ensured this is a file. Handler can re-verify if critical.
+    if not os.path.isfile(resolved_path):
+        cli_ui.print_error(f"Provided path is not a file: {resolved_path}", "File Error")
+        activity_logger.update_last_activity_status("failure", f"Path is not a file: {resolved_path}")
         return
 
     file_extension = os.path.splitext(resolved_path)[1].lower()
@@ -118,10 +125,9 @@ def handle_summarize_file(connector, parameters: dict):
 
     file_content, content_source, extraction_error = _extract_file_content(resolved_path, file_extension)
 
-    if not file_content.strip() and extraction_error: # If extraction failed and produced an error message
-        # LLM will be informed about the failure.
+    if not file_content.strip() and extraction_error:
         llm_input_content = f"I attempted to summarize the file at path '{resolved_path}'. It is a '{file_extension}' file. However, I encountered an issue extracting its content. The error was: '{extraction_error}'. Can you provide a generic statement or acknowledge this based on the filename and type, or ask the user for more information if needed?"
-    elif not file_content.strip(): # If file is empty or unsupported and no specific error was generated by _extract_file_content
+    elif not file_content.strip():
         llm_input_content = f"The file at path '{resolved_path}' (type: '{file_extension}') appears to be empty or its content could not be read for direct summarization. Please provide a general comment or ask for clarification."
     else:
         llm_input_content = file_content
@@ -132,7 +138,7 @@ def handle_summarize_file(connector, parameters: dict):
 
     summary_spinner_text = f"[spinner_style] {cli_constants.ICONS.get('thinking','🤔')} Asking LLM to summarize '{os.path.basename(resolved_path)}' ({content_source})...[/spinner_style]"
     with Live(Spinner("dots", text=summary_spinner_text), console=cli_ui.console, transient=True, refresh_per_second=10):
-        summary_result = connector.get_summary(llm_input_content, resolved_path) # Pass resolved_path for context
+        summary_result = connector.get_summary(llm_input_content, resolved_path)
 
     if summary_result and summary_result.get("summary_text"):
         cli_ui.print_panel_message("LLM Summary", summary_result["summary_text"], "info", cli_constants.ICONS.get('summary','📝'))
@@ -149,18 +155,18 @@ def handle_ask_question_about_file(connector, parameters: dict):
     """Handles asking a question about a file's content."""
     activity_logger.log_action("ask_question_about_file", parameters, "pending_execution", "Attempting to answer question about file.")
 
-    file_path_param = parameters.get("file_path")
+    # Parameter 'file_path' is expected to be an absolute, validated path from nlu_processor
+    resolved_path = parameters.get("file_path")
     question = parameters.get("question")
 
-    if not file_path_param or not question:
+    if not resolved_path or not question:
         cli_ui.print_error("File path or question is missing.", "Q&A Error")
-        activity_logger.update_last_activity_status("failure", "Missing file_path or question.")
+        activity_logger.update_last_activity_status("failure", "Missing resolved file_path or question.")
         return
 
-    resolved_path = path_resolver.resolve_path(file_path_param, cli_ui)
-    if not resolved_path or not os.path.isfile(resolved_path):
-        cli_ui.print_error(f"File not found or is not a file: {resolved_path or file_path_param}", "File Error")
-        activity_logger.update_last_activity_status("failure", f"File not found for Q&A: {resolved_path or file_path_param}")
+    if not os.path.isfile(resolved_path):
+        cli_ui.print_error(f"Provided path is not a file: {resolved_path}", "File Error")
+        activity_logger.update_last_activity_status("failure", f"Path for Q&A is not a file: {resolved_path}")
         return
 
     file_extension = os.path.splitext(resolved_path)[1].lower()
@@ -175,8 +181,7 @@ def handle_ask_question_about_file(connector, parameters: dict):
     else:
         llm_input_content = file_content
     
-    # Content length truncation for Q&A might also be needed, similar to summarization
-    if len(llm_input_content) > MAX_CONTENT_LENGTH_FOR_SUMMARY: # Using same constant for now
+    if len(llm_input_content) > MAX_CONTENT_LENGTH_FOR_SUMMARY:
         llm_input_content = llm_input_content[:MAX_CONTENT_LENGTH_FOR_SUMMARY] + "\n\n[Content truncated due to length]"
         cli_ui.print_info("Content was truncated for LLM Q&A due to length.", "Content Truncation")
 
@@ -198,17 +203,23 @@ def handle_ask_question_about_file(connector, parameters: dict):
 def handle_list_folder_contents(parameters: dict):
     """Lists contents of a specified folder."""
     activity_logger.log_action("list_folder_contents", parameters, "pending_execution", "Attempting to list folder contents.")
-    folder_path_param = parameters.get("folder_path")
+    
+    # Parameter 'folder_path' is expected to be an absolute, validated path from nlu_processor
+    resolved_path = parameters.get("folder_path")
 
-    resolved_path = path_resolver.resolve_path(folder_path_param, cli_ui, expect_dir=True)
-    if not resolved_path or not os.path.isdir(resolved_path):
-        cli_ui.print_error(f"Folder not found or is not a directory: {resolved_path or folder_path_param}", "Directory Error")
-        activity_logger.update_last_activity_status("failure", f"Folder not found for list: {resolved_path or folder_path_param}")
+    if not resolved_path:
+        cli_ui.print_error("Folder path is missing for listing.", "Directory Error")
+        activity_logger.update_last_activity_status("failure", "Missing resolved folder_path for list.")
+        return
+
+    if not os.path.isdir(resolved_path):
+        cli_ui.print_error(f"Provided path is not a directory: {resolved_path}", "Directory Error")
+        activity_logger.update_last_activity_status("failure", f"Path for list is not a directory: {resolved_path}")
         return
 
     try:
         cli_ui.console.print(f"{cli_constants.ICONS.get('folder','📁')} Contents of [filepath]{resolved_path}[/filepath]:")
-        items, error = fs_utils.list_folder_contents_simple(resolved_path) # Assuming fs_utils has this
+        items, error = fs_utils.list_folder_contents_simple(resolved_path)
 
         if error:
             cli_ui.print_error(f"Error listing folder: {error}", "Listing Error")
@@ -218,8 +229,7 @@ def handle_list_folder_contents(parameters: dict):
         if not items:
             cli_ui.print_info("The folder is empty.", "Empty Folder")
             activity_logger.update_last_activity_status("success", "Folder listed (empty).", result_data={"path": resolved_path, "count": 0})
-            # Update session context about the listed folder (even if empty)
-            from . import session_manager # Local import to avoid circularity if session_manager imports action_handlers
+            from . import session_manager
             session_manager.update_session_context("last_folder_listed_path", resolved_path)
             session_manager.update_session_context("last_listed_items", [])
             return
@@ -233,15 +243,13 @@ def handle_list_folder_contents(parameters: dict):
 
         display_count = 0
         for i, item in enumerate(items):
-            if display_count >= MAX_ITEMS_TO_DISPLAY_IN_LIST and len(items) > MAX_ITEMS_TO_DISPLAY_IN_LIST + 5 : # Show 'more items' message if significantly truncated
+            if display_count >= MAX_ITEMS_TO_DISPLAY_IN_LIST and len(items) > MAX_ITEMS_TO_DISPLAY_IN_LIST + 5 :
                 remaining_items = len(items) - display_count
                 table.add_row("...", f"... and {remaining_items} more items ...", "", "", "")
                 break
             
             item_type_icon = cli_constants.ICONS.get('folder','📁') if item['type'] == 'directory' else cli_constants.ICONS.get('file','📄')
-            
-            # Apply styling to filename if it's a directory
-            name_style = "filepath" if item['type'] == 'directory' else "dim_text" # Example style
+            name_style = "filepath" if item['type'] == 'directory' else "dim_text"
             name_display = Text(f"{item_type_icon} {item['name']}", style=name_style)
 
             table.add_row(
@@ -256,10 +264,9 @@ def handle_list_folder_contents(parameters: dict):
         cli_ui.console.print(table)
         activity_logger.update_last_activity_status("success", f"Listed {len(items)} items.", result_data={"path": resolved_path, "count": len(items)})
         
-        # Update session context
-        from . import session_manager # Local import
+        from . import session_manager
         session_manager.update_session_context("last_folder_listed_path", resolved_path)
-        session_manager.update_session_context("last_listed_items", items) # Store full list for context
+        session_manager.update_session_context("last_listed_items", items)
 
     except Exception as e:
         cli_ui.print_error(f"An unexpected error occurred while listing folder: {e}", "Listing Error")
@@ -268,57 +275,66 @@ def handle_list_folder_contents(parameters: dict):
 
 
 def handle_search_files(connector, parameters: dict):
-    """Searches for files based on criteria (name, type, or LLM-assisted content)."""
+    """Searches for files based on criteria."""
     activity_logger.log_action("search_files", parameters, "pending_execution", "Attempting to search files.")
+    
     search_criteria = parameters.get("search_criteria", "").strip()
-    search_path_param = parameters.get("search_path")
-    # search_type = parameters.get("search_type", "name") # e.g., 'name', 'type', 'content' - NLU should determine this
+    # Parameter 'search_path' is expected to be an absolute, validated directory path from nlu_processor
+    resolved_search_path = parameters.get("search_path")
 
-    resolved_path = path_resolver.resolve_path(search_path_param, cli_ui, expect_dir=True)
-    if not resolved_path or not os.path.isdir(resolved_path):
-        cli_ui.print_error(f"Search path not found or is not a directory: {resolved_path or search_path_param}", "Search Path Error")
-        activity_logger.update_last_activity_status("failure", f"Search path not found: {resolved_path or search_path_param}")
+    if not resolved_search_path:
+        cli_ui.print_error("Search path parameter 'search_path' is missing or invalid.", "Search Path Error")
+        activity_logger.update_last_activity_status("failure", "Missing or invalid resolved search_path.")
+        return
+
+    if not os.path.isdir(resolved_search_path):
+        cli_ui.print_error(f"Search path is not a directory: {resolved_search_path}", "Search Path Error")
+        activity_logger.update_last_activity_status("failure", f"Search path not a directory: {resolved_search_path}")
         return
 
     if not search_criteria or search_criteria == "__MISSING__":
         cli_ui.print_error("Search criteria are missing.", "Search Error")
+        # This case might also be handled by nlu_processor prompting the user.
+        # If it reaches here, it's a fallback.
         activity_logger.update_last_activity_status("failure", "Missing search criteria.")
         return
 
-    cli_ui.console.print(f"{cli_constants.ICONS.get('search','🔍')} Searching in [filepath]{resolved_path}[/filepath] for: '[highlight]{search_criteria}[/highlight]'")
-    
-    # This is a simplified search. A real implementation would be more complex:
-    # - Decide if it's name, type, or content search.
-    # - For content search, iterate files, extract text (like in summarize), then ask LLM if text matches criteria.
-    # - For now, let's simulate a basic name search.
+    cli_ui.console.print(f"{cli_constants.ICONS.get('search','🔍')} Searching in [filepath]{resolved_search_path}[/filepath] for: '[highlight]{search_criteria}[/highlight]'")
     
     found_items = []
     search_spinner_text = f"[spinner_style] {cli_constants.ICONS.get('thinking','🤔')} Searching files...[/spinner_style]"
 
     with Live(Spinner("dots", text=search_spinner_text), console=cli_ui.console, transient=True, refresh_per_second=10):
-        time.sleep(0.1) # Simulate work
-        # Actual recursive search logic using os.walk or fs_utils
-        # Example: items = fs_utils.search_files_recursive(resolved_path, search_criteria, search_type)
-        # For this stub, let's just do a simple name check in the top directory
-        for entry in os.scandir(resolved_path):
-            if search_criteria.lower() in entry.name.lower():
+        time.sleep(0.1) 
+        # TODO: Replace with a more robust search from fs_utils, potentially using fs_utils.search_files_recursive
+        # This current search is very basic (non-recursive name check).
+        for entry in os.scandir(resolved_search_path):
+            # Allow searching for "image" or "document" types, or specific extensions
+            is_match = False
+            entry_name_lower = entry.name.lower()
+            search_criteria_lower = search_criteria.lower()
+
+            if search_criteria_lower in entry_name_lower: # Basic name matching
+                is_match = True
+            elif fs_utils.is_file_type_match(entry.path, search_criteria_lower, entry.is_file()): # Type matching
+                is_match = True
+            
+            if is_match:
                 stat = entry.stat()
                 found_items.append({
                     "name": entry.name,
-                    "path": entry.path,
+                    "path": entry.path, # This is already absolute from os.scandir
                     "type": "directory" if entry.is_dir() else "file",
                     "size_bytes": stat.st_size,
                     "size_readable": fs_utils.bytes_to_readable(stat.st_size),
                     "modified_timestamp": stat.st_mtime,
                     "modified_readable": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(stat.st_mtime))
                 })
-        # This is a very basic search. A proper search would be recursive and might involve LLM for content.
-        # For a more advanced search, you'd call a specific function in fs_utils or even involve the LLM.
-
+    
     if not found_items:
-        cli_ui.print_info(f"No items found matching '[highlight]{search_criteria}[/highlight]' in [filepath]{resolved_path}[/filepath].", "Search Complete")
-        activity_logger.update_last_activity_status("success", "Search complete (no results).", result_data={"path": resolved_path, "criteria": search_criteria, "count": 0})
-        from . import session_manager # Local import
+        cli_ui.print_info(f"No items found matching '[highlight]{search_criteria}[/highlight]' in [filepath]{resolved_search_path}[/filepath].", "Search Complete")
+        activity_logger.update_last_activity_status("success", "Search complete (no results).", result_data={"path": resolved_search_path, "criteria": search_criteria, "count": 0})
+        from . import session_manager
         session_manager.update_session_context("last_search_results", [])
         return
 
@@ -327,7 +343,7 @@ def handle_search_files(connector, parameters: dict):
     table = Table(title=None, show_header=True, header_style="table.header", box=ROUNDED)
     table.add_column("#", style="dim", width=4, justify="right")
     table.add_column("Name", style="dim_text", min_width=30, overflow="fold")
-    table.add_column("Path", style="filepath", min_width=40, overflow="fold") # Show full path for search results
+    table.add_column("Path", style="filepath", min_width=40, overflow="fold")
     table.add_column("Type", width=10)
 
     display_count = 0
@@ -339,7 +355,7 @@ def handle_search_files(connector, parameters: dict):
 
         item_type_icon = cli_constants.ICONS.get('folder','📁') if item['type'] == 'directory' else cli_constants.ICONS.get('file','📄')
         name_display = Text(f"{item_type_icon} {item['name']}")
-        path_display = Text(item['path'], style="filepath") # It's useful to see the full path in search
+        path_display = Text(item['path'], style="filepath")
 
         table.add_row(
             str(i + 1),
@@ -350,51 +366,58 @@ def handle_search_files(connector, parameters: dict):
         display_count +=1
 
     cli_ui.console.print(table)
-    activity_logger.update_last_activity_status("success", f"Search found {len(found_items)} items.", result_data={"path": resolved_path, "criteria": search_criteria, "count": len(found_items)})
+    activity_logger.update_last_activity_status("success", f"Search found {len(found_items)} items.", result_data={"path": resolved_search_path, "criteria": search_criteria, "count": len(found_items)})
     
-    from . import session_manager # Local import
+    from . import session_manager
     session_manager.update_session_context("last_search_results", found_items)
 
 
 def handle_move_item(parameters: dict):
     """Moves a file or folder."""
     activity_logger.log_action("move_item", parameters, "pending_execution", "Attempting to move item.")
-    source_path_param = parameters.get("source_path")
-    destination_path_param = parameters.get("destination_path")
-
-    if not source_path_param or not destination_path_param:
-        cli_ui.print_error("Source or destination path is missing.", "Move Error")
-        activity_logger.update_last_activity_status("failure", "Missing source or destination path for move.")
-        return
-
-    resolved_source = path_resolver.resolve_path(source_path_param, cli_ui, check_exists=True) # Source must exist
-    if not resolved_source: # resolve_path prints its own error if check_exists fails
-        activity_logger.update_last_activity_status("failure", f"Source path for move not found or invalid: {source_path_param}")
-        return
-
-    # For destination, we want the absolute path, but it might not exist yet (if it's a new filename within an existing dir)
-    # Or it could be just a directory path.
-    # path_resolver needs a flag to handle "destination" type paths.
-    # For simplicity, let's assume destination_path_param is either an existing dir or a full new path.
     
-    # Create a more robust destination resolver if needed.
-    # This is a simplified destination logic:
-    resolved_dest_parent = os.path.dirname(path_resolver.resolve_path(destination_path_param, cli_ui, check_exists=False))
-    if not os.path.exists(resolved_dest_parent) or not os.path.isdir(resolved_dest_parent):
-         # Try to see if destination_path_param itself is an existing directory
-        potential_dest_dir = path_resolver.resolve_path(destination_path_param, cli_ui, check_exists=False)
-        if os.path.isdir(potential_dest_dir):
-            # User provided a directory, so we'll move the source *into* it
-            final_destination_path = os.path.join(potential_dest_dir, os.path.basename(resolved_source))
-        else:
-            cli_ui.print_error(f"Destination directory does not exist: {resolved_dest_parent or destination_path_param}", "Move Error")
-            activity_logger.update_last_activity_status("failure", f"Destination directory for move does not exist: {resolved_dest_parent or destination_path_param}")
-            return
-    else:
-        # User provided a full path (potentially with a new name for the source)
-        final_destination_path = path_resolver.resolve_path(destination_path_param, cli_ui, check_exists=False)
+    # 'source_path' and 'destination_path' expected to be resolved by nlu_processor.
+    # 'source_path' must exist.
+    # 'destination_path' can be an existing directory (move into it) or a full new path.
+    resolved_source = parameters.get("source_path")
+    final_destination_path = parameters.get("destination_path") # nlu_processor should figure out the final full path
 
+    if not resolved_source or not final_destination_path:
+        cli_ui.print_error("Source or destination path is missing or invalid after processing.", "Move Error")
+        activity_logger.update_last_activity_status("failure", "Missing resolved source or destination path for move.")
+        return
 
+    # nlu_processor should have validated source existence. Re-check for safety.
+    if not os.path.exists(resolved_source):
+        cli_ui.print_error(f"Source path does not exist: {resolved_source}", "Move Error")
+        activity_logger.update_last_activity_status("failure", f"Source path for move not found: {resolved_source}")
+        return
+        
+    # Ensure destination parent directory exists if final_destination_path is a full new path
+    dest_parent_dir = os.path.dirname(final_destination_path)
+    if not os.path.isdir(dest_parent_dir):
+        # This case implies final_destination_path itself was meant to be a directory
+        # but it doesn't exist. Or, nlu_processor incorrectly constructed final_destination_path.
+        # If final_destination_path *is* the directory, os.path.dirname would be its parent.
+        # This logic might need refinement based on how nlu_processor prepares destination_path.
+        # For now, assume nlu_processor ensures dest_parent_dir is valid if final_destination_path is a new file name.
+        # If final_destination_path is an existing directory to move *into*, this check is fine.
+        # If final_destination_path is a new directory path to be created by move, this will fail.
+        # shutil.move can create the final component if it's a rename, but not intermediate dirs.
+        
+        # Simpler: if the target is `somedir/item_name` and `somedir` doesn't exist, error.
+        # If target is `existing_dir` (to move into), then `dest_parent_dir` is `existing_dir`'s parent.
+        if not os.path.exists(dest_parent_dir):
+             try:
+                 # Attempt to create the parent directory for the destination
+                 os.makedirs(dest_parent_dir, exist_ok=True)
+                 cli_ui.print_info(f"Created destination directory: [filepath]{dest_parent_dir}[/filepath]", "Directory Created")
+             except Exception as e_mkdir:
+                 cli_ui.print_error(f"Destination directory [filepath]{dest_parent_dir}[/filepath] does not exist and could not be created: {e_mkdir}", "Move Error")
+                 activity_logger.update_last_activity_status("failure", f"Destination parent directory for move does not exist and couldn't be created: {dest_parent_dir}")
+                 return
+    
+    # Handle overwrite confirmation
     if os.path.exists(final_destination_path):
         overwrite_confirm = cli_ui.ask_question_prompt(
             f"Destination '[filepath]{final_destination_path}[/filepath]' already exists. Overwrite? (yes/no)"
@@ -403,8 +426,7 @@ def handle_move_item(parameters: dict):
             cli_ui.print_info("Move operation cancelled by user (overwrite denied).", "Move Cancelled")
             activity_logger.update_last_activity_status("user_cancelled", "Move cancelled due to existing destination.")
             return
-        # If overwriting a directory, it's more complex (e.g., shutil.rmtree then move).
-        # For simplicity, shutil.move handles file overwrite but might error on dir overwrite.
+        # Further checks for directory vs file overwrite
         if os.path.isdir(final_destination_path) and os.path.isfile(resolved_source):
              cli_ui.print_error(f"Cannot overwrite directory '[filepath]{final_destination_path}[/filepath]' with a file.", "Move Error")
              activity_logger.update_last_activity_status("failure", "Cannot overwrite directory with file.")
@@ -413,7 +435,6 @@ def handle_move_item(parameters: dict):
              cli_ui.print_error(f"Cannot overwrite file '[filepath]{final_destination_path}[/filepath]' with a directory.", "Move Error")
              activity_logger.update_last_activity_status("failure", "Cannot overwrite file with directory.")
              return
-
 
     move_confirm_q = f"Confirm moving [filepath]{resolved_source}[/filepath] to [filepath]{final_destination_path}[/filepath]? (yes/no)"
     confirmation = cli_ui.ask_question_prompt(move_confirm_q)
@@ -438,43 +459,45 @@ def handle_propose_and_execute_organization(connector, parameters: dict):
     """Proposes an organization plan for a folder and allows user to execute it."""
     activity_logger.log_action("propose_and_execute_organization", parameters, "pending_execution", "Attempting to organize folder.")
     
-    target_path_param = parameters.get("target_path_or_context")
-    organization_goal = parameters.get("organization_goal", "Organize files logically") # Default goal
+    # 'target_path_or_context' expected to be resolved to an absolute directory path by nlu_processor,
+    # and named 'target_path' in the parameters dict.
+    resolved_path = parameters.get("target_path") 
+    organization_goal = parameters.get("organization_goal", "Organize files logically")
 
-    resolved_path = path_resolver.resolve_path(target_path_param, cli_ui, expect_dir=True)
-    if not resolved_path or not os.path.isdir(resolved_path):
-        cli_ui.print_error(f"Target folder not found or is not a directory: {resolved_path or target_path_param}", "Organization Error")
-        activity_logger.update_last_activity_status("failure", f"Target folder for organization not found: {resolved_path or target_path_param}")
+    if not resolved_path:
+        cli_ui.print_error("Target folder path is missing for organization.", "Organization Error")
+        activity_logger.update_last_activity_status("failure", "Missing resolved target_path for organization.")
+        return
+
+    if not os.path.isdir(resolved_path):
+        cli_ui.print_error(f"Target path for organization is not a directory: {resolved_path}", "Organization Error")
+        activity_logger.update_last_activity_status("failure", f"Target for organization not a directory: {resolved_path}")
         return
 
     cli_ui.console.print(f"{cli_constants.ICONS.get('plan','📋')} Analyzing folder '[filepath]{resolved_path}[/filepath]' for organization plan...\nGoal: [highlight]{organization_goal}[/highlight]")
 
-    # Get a summary of current contents (simple list for now, could be more detailed)
-    current_items_simple, _ = fs_utils.list_folder_contents_simple(resolved_path, max_depth=0) # Just top level for summary
-    current_contents_summary_parts = [f"{item['name']} ({item['type']})" for item in current_items_simple[:10]] # Summary of first 10 items
+    current_items_simple, _ = fs_utils.list_folder_contents_simple(resolved_path, max_depth=0)
+    current_contents_summary_parts = [f"{item['name']} ({item['type']})" for item in current_items_simple[:10]]
     if len(current_items_simple) > 10:
         current_contents_summary_parts.append(f"...and {len(current_items_simple)-10} more items.")
     current_contents_summary_text = f"Current folder '{os.path.basename(resolved_path)}' contains: " + ", ".join(current_contents_summary_parts)
     if not current_items_simple:
         current_contents_summary_text = f"Current folder '{os.path.basename(resolved_path)}' is empty."
 
-
     plan_spinner_text = f"[spinner_style] {cli_constants.ICONS.get('thinking','🤔')} Asking LLM to generate organization plan...[/spinner_style]"
     plan_json = None
     with Live(Spinner("dots", text=plan_spinner_text), console=cli_ui.console, transient=True, refresh_per_second=10):
         plan_result = connector.generate_organization_plan(resolved_path, organization_goal, current_contents_summary_text)
-        # Expected plan_result: {"plan_steps": [{"action": "create_folder", "path": "subfolder_name"}, {"action": "move", "source": "file.txt", "destination": "subfolder_name/file.txt"}], "explanation": "..."} or {"error": "..."}
         
         if plan_result and plan_result.get("plan_steps"):
-            plan_json = plan_result # Use the whole result which might include explanation
+            plan_json = plan_result
         elif plan_result and plan_result.get("error"):
             cli_ui.print_error(f"LLM failed to generate a plan: {plan_result['error']}", "Plan Generation Failed")
             activity_logger.update_last_activity_status("failure", f"LLM plan generation error: {plan_result['error']}")
             return
-        else: # Fallback to heuristic if LLM fails or returns unusable plan
+        else:
             cli_ui.print_warning("LLM failed to generate a structured plan. Attempting heuristic organization by type.", "LLM Plan Failed")
-            # Heuristic: organize by file extension into subfolders
-            heuristic_plan = fs_utils.generate_heuristic_organization_plan(resolved_path, "by_type")
+            heuristic_plan = fs_utils.generate_heuristic_organization_plan(resolved_path, "by_type") # Ensure this is defined in fs_utils
             if heuristic_plan and heuristic_plan.get("plan_steps"):
                 plan_json = heuristic_plan
                 cli_ui.print_info("Generated a heuristic plan to organize by file type.", "Heuristic Plan")
@@ -513,7 +536,7 @@ def handle_propose_and_execute_organization(connector, parameters: dict):
             details_parts.append(f"Source: [filepath]{step.get('source', 'N/A')}[/filepath]")
             details_parts.append(f"Destination: [filepath]{step.get('destination', 'N/A')}[/filepath]")
         else:
-            details_parts.append(str(step)) # Raw details for unknown actions
+            details_parts.append(str(step))
         table.add_row(str(i + 1), action.replace("_", " ").title(), "\n".join(details_parts))
     cli_ui.console.print(table)
 
@@ -524,7 +547,6 @@ def handle_propose_and_execute_organization(connector, parameters: dict):
         cli_ui.print_info("Organization plan execution cancelled by user.", "Execution Cancelled")
         activity_logger.update_last_activity_status("user_cancelled", "User cancelled organization plan execution.")
         return
-
     
     cli_ui.console.print(f"\n{cli_constants.ICONS.get('execute','🚀')} Executing organization plan...")
     executed_successfully = True
@@ -532,19 +554,20 @@ def handle_propose_and_execute_organization(connector, parameters: dict):
         cli_ui.console.print(f"Step {i+1}/{len(plan_steps)}: {step.get('action')}", end=" -> ")
         action_result = False
         try:
+            # Ensure paths in steps are relative to the main resolved_path
             if step.get("action") == "create_folder":
-                folder_to_create = os.path.join(resolved_path, step.get("path"))
+                folder_to_create = os.path.join(resolved_path, step.get("path").strip('/\\'))
                 if not os.path.exists(folder_to_create):
                     os.makedirs(folder_to_create)
                     cli_ui.console.print(f"[green]Created folder: {folder_to_create}[/green]")
                     action_result = True
                 else:
                     cli_ui.console.print(f"[yellow]Folder already exists (skipped): {folder_to_create}[/yellow]")
-                    action_result = True # Skipped is a form of success for the plan
+                    action_result = True
             
             elif step.get("action") == "move":
-                source_abs = os.path.join(resolved_path, step.get("source"))
-                dest_abs = os.path.join(resolved_path, step.get("destination"))
+                source_abs = os.path.join(resolved_path, step.get("source").strip('/\\'))
+                dest_abs = os.path.join(resolved_path, step.get("destination").strip('/\\'))
 
                 if not os.path.exists(source_abs):
                     cli_ui.console.print(f"[red]Error: Source file/folder not found: {source_abs}[/red]")
@@ -560,14 +583,14 @@ def handle_propose_and_execute_organization(connector, parameters: dict):
                     action_result = True
             else:
                 cli_ui.console.print(f"[yellow]Unknown action '{step.get('action')}' skipped.[/yellow]")
-                action_result = True 
+                action_result = True
 
             if not action_result:
                 executed_successfully = False
                 cli_ui.print_error(f"Failed to execute step {i+1}. Aborting plan.", "Execution Error")
                 break
-        except Exception as e_exec: # Variable is e_exec
-            cli_ui.console.print(f"[red]Error executing step {i+1}: {e_exec}[/red]") # CORRECTED: Use e_exec here
+        except Exception as e_exec:
+            cli_ui.console.print(f"[red]Error executing step {i+1}: {e_exec}[/red]")
             cli_ui.console.print_exception(max_frames=1)
             executed_successfully = False
             break
@@ -582,11 +605,13 @@ def handle_propose_and_execute_organization(connector, parameters: dict):
 
 def handle_show_activity_log(parameters: dict):
     """Displays recent activity logs."""
+    # No 'connector' needed for this specific handler based on main.py dispatch
     activity_logger.log_action("show_activity_log", parameters, "pending_execution", "Attempting to show activity log.")
-    count = parameters.get("count", 10) # Default to last 10 activities
+    count = parameters.get("count", 10) 
 
     try:
-        logs = activity_logger.get_last_n_activities(count)
+        # Corrected function call
+        logs = activity_logger.get_recent_activities(count)
         if not logs:
             cli_ui.print_info("No activities found in the log.", "Activity Log Empty")
             activity_logger.update_last_activity_status("success", "Log viewed (empty).")
@@ -600,27 +625,40 @@ def handle_show_activity_log(parameters: dict):
         table.add_column("Status", width=15)
         table.add_column("Details/Parameters", min_width=40, overflow="fold")
 
-        for log_entry in logs:
+        for log_entry in logs: # logs are already reversed by get_recent_activities if needed, or handled by it.
             params_str_parts = []
             if log_entry.get("parameters"):
                 for k, v in log_entry["parameters"].items():
                     v_str = str(v)
-                    if len(v_str) > 70: v_str = v_str[:67] + "..." # Truncate long param values
+                    if len(v_str) > 70: v_str = v_str[:67] + "..."
                     params_str_parts.append(f"[dim_text]{k}[/dim_text]=[highlight]{v_str}[/highlight]")
             params_display = ", ".join(params_str_parts) if params_str_parts else log_entry.get("details", "N/A")
             
             status = log_entry.get('status', 'N/A')
             status_style = "green" if "success" in status else ("yellow" if "pending" in status or "user_cancelled" in status or "partial" in status else ("red" if "fail" in status or "exception" in status else "dim"))
 
+            # Ensure timestamp_readable exists or fall back
+            timestamp_display = log_entry.get("timestamp_readable")
+            if not timestamp_display and "timestamp" in log_entry:
+                try:
+                    dt_obj = datetime.datetime.fromisoformat(log_entry["timestamp"])
+                    timestamp_display = dt_obj.strftime('%Y-%m-%d %H:%M:%S')
+                except:
+                    timestamp_display = log_entry["timestamp"] # fallback to raw ISO if conversion fails
+
             table.add_row(
-                log_entry.get("timestamp_readable", "N/A"),
-                log_entry.get("action_name", "N/A"),
+                timestamp_display if timestamp_display else "N/A",
+                log_entry.get("action_name", log_entry.get("action","N/A")), # Use 'action' if 'action_name' not present
                 Text(status.replace("_", " ").title(), style=status_style),
                 params_display
             )
         cli_ui.console.print(table)
         activity_logger.update_last_activity_status("success", f"Displayed last {min(count, len(logs))} activities.")
 
+    except AttributeError as e_attr: # Specifically catch if 'get_recent_activities' was wrong
+        cli_ui.print_error(f"Failed to display activity log (AttributeError): {e_attr}", "Log Display Error")
+        cli_ui.console.print_exception(max_frames=2)
+        activity_logger.update_last_activity_status("failure", f"Error displaying log (AttributeError): {e_attr}")
     except Exception as e:
         cli_ui.print_error(f"Failed to display activity log: {e}", "Log Display Error")
         cli_ui.console.print_exception(max_frames=2)
@@ -630,7 +668,7 @@ def handle_show_activity_log(parameters: dict):
 def handle_general_chat(connector, parameters: dict):
     """Handles general chat or commands not fitting other categories."""
     activity_logger.log_action("general_chat", parameters, "pending_execution", "Handling general chat/command.")
-    user_query = parameters.get("user_query", "") # This should be the original full input if NLU defaulted here
+    user_query = parameters.get("user_query", "")
 
     if not user_query:
         cli_ui.print_warning("No query provided for general chat.", "Chat Error")
@@ -641,11 +679,9 @@ def handle_general_chat(connector, parameters: dict):
     
     chat_spinner_text = f"[spinner_style] {cli_constants.ICONS.get('thinking','🤔')} Processing general query...[/spinner_style]"
     with Live(Spinner("dots", text=chat_spinner_text), console=cli_ui.console, transient=True, refresh_per_second=10):
-        response = connector.general_chat_completion(user_query) # Assumes connector has such a method
+        response = connector.general_chat_completion(user_query)
 
     if response and response.get("response_text"):
-        # For general chat, just print the response directly, maybe in an info panel if it's long.
-        # Or use Markdown if the response might contain it.
         cli_ui.print_panel_message("LLM Response", response["response_text"], "info", cli_constants.ICONS.get('app_icon','🤖'))
         activity_logger.update_last_activity_status("success", "General chat response provided.")
     elif response and response.get("error"):
@@ -655,40 +691,17 @@ def handle_general_chat(connector, parameters: dict):
         cli_ui.print_error("LLM did not return a valid response or error for the general query.", "Chat Processing Failed")
         activity_logger.update_last_activity_status("failure", "LLM no valid response for general chat.")
 
+
 def handle_redo_activity(connector, parameters: dict):
     """Allows re-doing a previous activity from the log."""
     activity_logger.log_action("redo_activity", parameters, "pending_execution", "Attempting to redo activity.")
-    # This handler is complex. It needs to:
-    # 1. Get the 'activity_id' or 'index_in_log' from parameters.
-    # 2. Fetch that specific activity from activity_logger.
-    # 3. Re-populate action_name and parameters.
-    # 4. Get the appropriate handler from the map.
-    # 5. Call the handler.
-    # This requires main_cli.py to be able to dispatch an action again.
-    # A simpler approach might be to have this function return the action_name and params
-    # to main_cli.py, which then re-enters its dispatch logic.
-    # For now, let's just stub it.
-    
-    target_activity_ref = parameters.get("activity_reference") # Could be "last", "last search", or an index/ID
+    target_activity_ref = parameters.get("activity_reference")
 
     cli_ui.print_warning(f"Redo functionality for '{target_activity_ref}' is not fully implemented yet. It would require re-dispatching the original command.", "Not Implemented")
     activity_logger.update_last_activity_status("partial_failure", "Redo not fully implemented.")
-    # In a full implementation:
-    # original_action_log = activity_logger.get_activity_by_reference(target_activity_ref)
-    # if original_action_log:
-    #     action_to_redo = original_action_log.get("action_name")
-    #     params_to_redo = original_action_log.get("parameters")
-    #     cli_ui.print_info(f"Attempting to redo action: {action_to_redo} with params: {params_to_redo}")
-    #     # Here you'd need to call the main dispatch loop or the specific handler again.
-    #     # This is tricky as it might create nested calls or state issues.
-    # else:
-    #     cli_ui.print_error(f"Could not find activity '{target_activity_ref}' to redo.", "Redo Error")
 
 
 # === Action Handler Map ===
-# This map is used by main_cli.py to find the correct handler function.
-# It's good practice to define it here so all handlers are in one place.
-
 def get_action_handler_map():
     return {
         "summarize_file": handle_summarize_file,
@@ -698,8 +711,9 @@ def get_action_handler_map():
         "move_item": handle_move_item,
         "propose_and_execute_organization": handle_propose_and_execute_organization,
         "show_activity_log": handle_show_activity_log,
-        "general_chat": handle_general_chat, # Fallback for unrecognized but potentially valid LLM actions
+        "general_chat": handle_general_chat,
         "redo_activity": handle_redo_activity,
-        # Add other action handlers here as you create them
-        # "unknown": handle_unknown_action, # You might want a specific handler for truly unknown actions
+        # "organize_file": handle_organize_file, # This action was hallucinated by LLM.
+                                                # If truly needed, it would be implemented.
+                                                # For now, it's not a defined action.
     }

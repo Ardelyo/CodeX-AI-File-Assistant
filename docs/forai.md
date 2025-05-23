@@ -1,11 +1,11 @@
 
-# AI Assistant System Context: CodeX AI File Assistant
+# AI Assistant System Context: SAM-Open (Sistem Asisten Mandiri) File Assistant
 
-This document provides the necessary context for an AI assistant to understand and effectively contribute to the "CodeX AI File Assistant" project.
+This document provides the necessary context for an AI assistant to understand and effectively contribute to the "SAM-Open (Sistem Asisten Mandiri) File Assistant" project.
 
 ## 1. Project Overview
 
-*   **Project Name:** CodeX AI File Assistant
+*   **Project Name:** SAM-Open (Sistem Asisten Mandiri) File Assistant
 *   **Version (as of this context):** v1.8.0
 *   **Tagline:** Transforming File Management with Local AI Intelligence
 *   **Core Purpose:** A sophisticated command-line utility that uses locally-run Large Language Models (LLMs) via Ollama to provide an intuitive, natural language interface for managing, understanding, and organizing files on a local system.
@@ -118,6 +118,6 @@ When assisting with this project, please adhere to the following:
     *   `activity_log.jsonl` stores command history.
     *   Understand their structure if making changes related to session or logging.
 
-By following these guidelines, you can provide accurate, relevant, and high-quality assistance for the "CodeX AI File Assistant" project.
+By following these guidelines, you can provide accurate, relevant, and high-quality assistance for the "SAM-Open (Sistem Asisten Mandiri) File Assistant" project.
 
 --- END OF FILE forai.md ---

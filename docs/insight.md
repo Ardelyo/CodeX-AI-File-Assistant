@@ -1,4 +1,4 @@
-# CodeX AI File Assistant: Internal Design & Development Plan
+# SAM-Open (Sistem Asisten Mandiri) File Assistant: Internal Design & Development Plan
 
 ## 1. Concept and Vision
 

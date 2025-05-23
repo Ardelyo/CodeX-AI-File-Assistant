@@ -188,7 +188,7 @@ def print_startup_message_ui(connector) -> bool:
     console.clear(); time.sleep(0.1)
     spinner_icon = ICONS.get('thinking', '🤔')
     spinner_renderable_text = Text.assemble(
-        (spinner_icon, ""), (" ", ""), (f"Initializing CodeX Assistant...", "spinner_style")
+        (spinner_icon, ""), (" ", ""), (f"Initializing SAM-Open Assistant...", "spinner_style")
     )
     with Live(Spinner("dots", text=spinner_renderable_text), console=console, transient=True, refresh_per_second=10):
         time.sleep(0.5)
@@ -216,7 +216,7 @@ def display_help():
     global console # Ensure we use module global
     print("DEBUG: cli_ui.py: ENTERING display_help")
     info_icon = ICONS.get('info', 'ℹ️')
-    console.print(Panel(Markdown(f"""# CodeX AI Assistant Help {info_icon} (v{APP_VERSION})\n\n## Example Commands:\n*   `summarize "path/to/file.txt"` or `summarize "path/to/mydoc.pdf"`\n*   `what is in "doc.docx" about project alpha?`\n*   `list contents of "C:/folder"` OR `list item 3` (after search)\n*   `search for images in .`\n*   `search python scripts containing 'db_utils' in "~/dev/projects/CodeX"`\n*   `search images "C:/Users/Name/Pictures"`\n*   `move "old.txt" to "archive/"` or `move item 1 to "new_folder/"`\n*   `organize this folder by type` (after list/search)\n*   `organize "C:/Downloads" by file extension` or `organize "folder" by name`\n*   `show my last 5 activities` / `view log history`\n*   `redo last search` / `redo task 2`\n\n## Notes:\n*   Use quotes for paths with spaces.\n*   Context is remembered (e.g., `summarize item 1` after a search).\n*   File organization is experimental; always review plans before execution."""),
+    console.print(Panel(Markdown(f"""# SAM-Open (Sistem Asisten Mandiri) File Assistant Help {info_icon} (v{APP_VERSION})\n\n## Example Commands:\n*   `summarize "path/to/file.txt"` or `summarize "path/to/mydoc.pdf"`\n*   `what is in "doc.docx" about project alpha?`\n*   `list contents of "C:/folder"` OR `list item 3` (after search)\n*   `search for images in .`\n*   `search python scripts containing 'db_utils' in "~/dev/my_project"`\n*   `search images "C:/Users/Name/Pictures"`\n*   `move "old.txt" to "archive/"` or `move item 1 to "new_folder/"`\n*   `organize this folder by type` (after list/search)\n*   `organize "C:/Downloads" by file extension` or `organize "folder" by name`\n*   `show my last 5 activities` / `view log history`\n*   `redo last search` / `redo task 2`\n\n## Notes:\n*   Use quotes for paths with spaces.\n*   Context is remembered (e.g., `summarize item 1` after a search).\n*   File organization is experimental; always review plans before execution."""),
                         title=f"{info_icon} Help", border_style="panel.border.info",
                         box=ROUNDED,padding=1))
     print("DEBUG: cli_ui.py: EXITING display_help")

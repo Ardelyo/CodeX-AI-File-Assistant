@@ -1,3 +1,15 @@
+# Changelog
+
+## 23 Mei 2025
+
+- Renamed project from "CodeX AI File Assistant" to "SAM-Open (Sistem Asisten Mandiri) File Assistant".
+- Introduced a framework to support multiple AI providers (Ollama, OpenRouter, Gemini, OpenAI).
+- Added configuration options for selecting and setting up AI providers.
+- Implemented skeleton connectors for OpenRouter, Gemini, and OpenAI.
+- Updated documentation and added unit tests for the new provider framework.
+
+---
+
 Modularity: Code is broken down into logical units.
 cli_constants.py: Stores ICONS, CUSTOM_THEME, APP_LOGO_TEXT, APP_VERSION, KNOWN_BAD_EXAMPLE_PATHS.
 cli_ui.py: Initializes console globally for other modules to import. Contains UI print helpers and the startup/help messages.
@@ -18,5 +30,3 @@ Imports console from cli_ui.
 Gets session_context via session_manager.get_session_context().
 Handles the main loop, direct parser selection, LLM fallback, NLU processing, indexed reference resolution, and action dispatch.
 ------
-
-

@@ -148,7 +148,7 @@ class OllamaConnector(AIProvider): # Inherit from AIProvider
             context_summary = "Current session context:\n" + "\n".join(context_summary_parts)
 
         system_prompt = f"""
-You are CodeX AI File Assistant, an expert in understanding user requests for file system operations.
+You are SAM-Open (Sistem Asisten Mandiri) File Assistant, an expert in understanding user requests for file system operations.
 Your task is to analyze the user's input, considering the provided session context, and provide a structured JSON output.
 The output should be a list of actions to be performed sequentially.
 

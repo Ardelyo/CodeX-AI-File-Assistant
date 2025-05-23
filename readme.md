@@ -9,7 +9,7 @@
   </pre>
 </div>
 
-<h1 align="center">CodeX AI File Assistant</h1>
+<h1 align="center">SAM-Open (Sistem Asisten Mandiri) File Assistant</h1>
 
 <p align="center">
   <em>Transforming File Management with Local AI Intelligence</em>
@@ -61,7 +61,7 @@ This project is proudly part of the **Unix Series**, a collection of projects by
 
 **A Note on AI Usage:** Artificial intelligence in the Unix Series is utilized as a specific tool to enhance capabilities and constitutes a focused part of the development process. This series emphasizes AI as a collaborator, not a replacement, and does not support ideologies of job displacement or unchecked AI dominance.
 
-**CodeX AI File Assistant** is a sophisticated command-line utility engineered to revolutionize your interaction with the local file system. By harnessing the power of locally-run Large Language Models (LLMs) via Ollama, CodeX offers an intuitive, natural language interface for managing, understanding, and organizing your digital assets with unprecedented ease and privacy.
+**SAM-Open (Sistem Asisten Mandiri) File Assistant** is a sophisticated command-line utility engineered to revolutionize your interaction with the local file system. By harnessing the power of locally-run Large Language Models (LLMs) via Ollama, SAM-Open offers an intuitive, natural language interface for managing, understanding, and organizing your digital assets with unprecedented ease and privacy.
 
 This project represents a dedicated exploration into applied artificial intelligence and system utilities, developed with passion and perseverance by **Ardellio Satria Anindito** during the 9th grade (2023-2025).
 
@@ -71,7 +71,7 @@ This project represents a dedicated exploration into applied artificial intellig
 
 ## ✨ Features
 
-CodeX empowers users with a suite of intelligent capabilities:
+SAM-Open empowers users with a suite of intelligent capabilities:
 
 *   🗣️ **Natural Language Understanding:** Communicate complex file operations using conversational English.
 *   🧠 **Local LLM Intelligence:** Leverages models like `gemma:2b`, `mistral`, etc., for robust understanding, summarization, Q&A, and strategic planning—all processed locally.
@@ -86,7 +86,7 @@ CodeX empowers users with a suite of intelligent capabilities:
     *   Receive AI-generated organization plans for specified folders based on user-defined goals (e.g., "organize by type," "sort by project name").
     *   Utilizes a Python-based heuristic fallback for common name-based organization if the LLM cannot devise a plan.
     *   Review and execute these plans step-by-step, maintaining full control.
-*   💾 **Session Context & Persistence:** CodeX remembers recent interactions (last file/folder, search results) for seamless, contextual follow-up commands, even across application restarts.
+*   💾 **Session Context & Persistence:** SAM-Open remembers recent interactions (last file/folder, search results) for seamless, contextual follow-up commands, even across application restarts.
 *   📜 **Comprehensive Activity Logging:** Maintains a detailed log of all actions for review, auditing, and a "redo" functionality for previous operations.
 *   🎨 **Rich Terminal User Interface:** Employs the `rich` library to deliver an enhanced CLI experience with styled text, tables, progress bars, and dynamic spinners.
 *   🔒 **Privacy First:** All file processing and AI computations occur entirely on your local machine, ensuring your data remains confidential.
@@ -97,7 +97,7 @@ CodeX empowers users with a suite of intelligent capabilities:
 
 ## 💡 Concept & Workflow
 
-CodeX operates through a streamlined, intelligent workflow visually represented below:
+SAM-Open operates through a streamlined, intelligent workflow visually represented below:
 
 <div align="center">
 <pre>
@@ -150,7 +150,7 @@ CodeX operates through a streamlined, intelligent workflow visually represented 
 
 1.  ⌨️ **User Input:** You articulate your file management needs in natural language.
 2.  🤖 **NLU & Intent Parsing:** Input is first processed by direct regex-based parsers. If no match, it's dispatched to the local LLM to discern *intent* and extract *parameters*.
-3.  🔗 **Contextual Awareness:** CodeX utilizes session history to resolve contextual references.
+3.  🔗 **Contextual Awareness:** SAM-Open utilizes session history to resolve contextual references.
 4.  ⚙️ **Action Dispatch & Tooling:** Based on the intent, appropriate tools are engaged (file system APIs, LLM for content processing or organization planning).
 5.  🖥️ **Output & Logging:** Results are displayed; actions are logged, and session context is updated.
 
@@ -160,7 +160,7 @@ CodeX operates through a streamlined, intelligent workflow visually represented 
 
 ## 🛠️ Technology Stack
 
-CodeX is built upon a foundation of modern and powerful technologies:
+SAM-Open is built upon a foundation of modern and powerful technologies:
 
 <div align="center">
   <table>
@@ -208,7 +208,7 @@ Before you begin, ensure your system meets the following requirements:
   <img src="https://img.shields.io/badge/Setup%20Instructions-2d3748?style=flat-square&logo=readthedocs&logoColor=white" alt="Setup">
 </div>
 
-Follow these steps to get CodeX up and running:
+Follow these steps to get SAM-Open up and running:
 
 1.  **Clone the Repository:**
     ```bash
@@ -228,9 +228,9 @@ Follow these steps to get CodeX up and running:
     pip install -r requirements.txt
     ```
 
-4.  **Configure CodeX:**
+4.  **Configure SAM-Open:**
     *   Open `config.py`.
-    *   Open `config.py`. This file is central to determining which AI provider CodeX will use.
+    *   Open `config.py`. This file is central to determining which AI provider SAM-Open will use.
     *   More details on configuring specific AI providers are in the section below.
 
 <div align="center">
@@ -239,11 +239,11 @@ Follow these steps to get CodeX up and running:
 
 ## ⚙️ Configuring AI Providers
 
-CodeX supports multiple AI providers. You can choose which one to use by editing the `config.py` file.
+SAM-Open supports multiple AI providers. You can choose which one to use by editing the `config.py` file.
 
 **Key Setting:**
 
-*   `AI_PROVIDER`: This variable in `config.py` determines which AI service CodeX will attempt to use.
+*   `AI_PROVIDER`: This variable in `config.py` determines which AI service SAM-Open will attempt to use.
     *   Default: `"ollama"`
     *   Available options: `"ollama"`, `"openrouter"`, `"gemini"`, `"openai"`
 
@@ -258,7 +258,7 @@ Below are the relevant settings in `config.py` for each provider:
     *   **Setup:**
         *   Ensure Ollama is installed and running on your system. You can download it from [ollama.ai](https://ollama.ai/).
         *   Pull the desired model using the command: `ollama pull your_model_name` (e.g., `ollama pull llama3:8b`).
-        *   CodeX uses these local models for all its AI capabilities when Ollama is selected.
+        *   SAM-Open uses these local models for all its AI capabilities when Ollama is selected.
 
 2.  **OpenRouter (`AI_PROVIDER = "openrouter"`)**
     *   Relevant settings: `OPENROUTER_SETTINGS` dictionary.
@@ -291,12 +291,12 @@ The connectors for **OpenRouter, Gemini, and OpenAI are currently placeholder (s
   <img src="https://img.shields.io/badge/%F0%9F%96%A5%EF%B8%8F%20Terminal%20Commands-2d3748?style=flat-square&logo=powershell&logoColor=white" alt="Terminal Commands">
 </div>
 
-1.  **Ensure Ollama is Running:** Start the Ollama service if it's not already active.
-2.  **Launch CodeX AI File Assistant:**
+1.  **Ensure Ollama is Running:** Start the Ollama service if it's not already active (if you are using the Ollama provider).
+2.  **Launch SAM-Open (Sistem Asisten Mandiri) File Assistant:**
     ```bash
     python main_cli.py
     ```
-3.  Upon successful initialization, you will be greeted by the CodeX interface (featuring the CODEX ASCII logo!).
+3.  Upon successful initialization, you will be greeted by the SAM-Open interface (featuring the SAM-Open ASCII logo - *Note: ASCII logo might still be CODEX, will be updated if different*).
 4.  Type `help` to view a list of example commands and interaction patterns.
 5.  To exit, type `quit` or `exit`.
 
@@ -342,7 +342,7 @@ The connectors for **OpenRouter, Gemini, and OpenAI are currently placeholder (s
   <img src="https://img.shields.io/badge/Future%20Enhancements-2962ff?style=flat-square&logo=trello&logoColor=white" alt="Future Enhancements">
 </div>
 
-CodeX is an evolving project with a vision for continued growth:
+SAM-Open is an evolving project with a vision for continued growth:
 
 *   **Enhanced NLU Contextualization:** Deeper understanding of multi-turn conversations and complex anaphora.
 *   **Advanced Search Capabilities:**
@@ -365,7 +365,7 @@ CodeX is an evolving project with a vision for continued growth:
   <img src="https://img.shields.io/badge/Contributions%20Welcome-0a66c2?style=flat-square&logo=github&logoColor=white" alt="Contributions Welcome">
 </div>
 
-Contributions are highly valued and welcomed! If you are passionate about AI, file systems, or CLI tool development, consider contributing to CodeX. Areas for contribution include:
+Contributions are highly valued and welcomed! If you are passionate about AI, file systems, or CLI tool development, consider contributing to SAM-Open. Areas for contribution include:
 
 *   Improving NLU prompt engineering for diverse LLMs.
 *   Expanding file type support (e.g., advanced PDF, spreadsheets, OCR).
@@ -382,7 +382,7 @@ Please create an issue to discuss potential changes or features before submittin
 
 ## 👤 Creator
 
-This project, **CodeX AI File Assistant**, was conceived and developed in **Indonesia** by:
+This project, **SAM-Open (Sistem Asisten Mandiri) File Assistant**, was conceived and developed in **Indonesia** by:
 
 <div align="center">
 <pre>
@@ -474,7 +474,7 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 </div>
 
 <p align="center">
-  <b>Thank you for exploring CodeX AI File Assistant!</b><br>
+  <b>Thank you for exploring SAM-Open (Sistem Asisten Mandiri) File Assistant!</b><br>
   Your feedback and contributions are appreciated.
 </p>
 

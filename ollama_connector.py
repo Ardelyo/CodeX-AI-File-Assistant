@@ -3,16 +3,17 @@
 import os
 import requests
 import json
-from config import OLLAMA_API_BASE_URL, OLLAMA_MODEL # Assuming config.py is in the project root
+from ai_provider import AIProvider # Import AIProvider
+# Removed: from config import OLLAMA_API_BASE_URL, OLLAMA_MODEL
 
-class OllamaConnector:
-    def __init__(self, base_url=OLLAMA_API_BASE_URL, model=OLLAMA_MODEL):
-        self.base_url = base_url
-        self.model = model
+class OllamaConnector(AIProvider): # Inherit from AIProvider
+    def __init__(self, config: dict): # Modified __init__ signature
+        self.base_url = config.get("BASE_URL", "http://localhost:11434") # Extract from config
+        self.model = config.get("MODEL", "gemma3:1b") # Extract from config
         self.api_generate_url = f"{self.base_url}/api/generate"
         self.api_tags_url = f"{self.base_url}/api/tags" # For checking model availability
 
-    def check_connection_and_model(self):
+    def check_connection_and_model(self) -> tuple[bool, bool, list]: # Added type hints
         """
         Checks connection to Ollama and if the configured model is available.
         Returns: (connection_ok, model_found, list_of_available_models_details)
@@ -50,7 +51,7 @@ class OllamaConnector:
             return True, False, [] # Connection was okay, but model list parsing failed
 
 
-    def _send_request_to_ollama(self, prompt_text: str, is_json_mode: bool = False) -> (dict | None):
+    def _send_request_to_ollama(self, prompt_text: str, is_json_mode: bool = False) -> (dict | None): # Retained type hint as it's an internal method
         """
         Sends a request to the Ollama /api/generate endpoint.
         Handles JSON mode and basic error scenarios.

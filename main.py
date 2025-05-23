@@ -3,7 +3,12 @@
 import os
 import time
 
+# Configuration and AI Provider Management
+from config import AI_PROVIDER, OLLAMA_SETTINGS, OPENROUTER_SETTINGS, GEMINI_SETTINGS, OPENAI_SETTINGS
 from ollama_connector import OllamaConnector
+from openrouter_connector import OpenRouterConnector
+from gemini_connector import GeminiConnector
+from openai_connector import OpenAIConnector
 
 from python import cli_constants
 from python import cli_ui
@@ -24,9 +29,41 @@ from rich.spinner import Spinner
 
 def main():
     session_manager.load_session_context()
-    connector = OllamaConnector()
+    
+    connector = None
+    try:
+        if AI_PROVIDER == "ollama":
+            connector = OllamaConnector(OLLAMA_SETTINGS)
+        elif AI_PROVIDER == "openrouter":
+            if OPENROUTER_SETTINGS.get("API_KEY") == "YOUR_OPENROUTER_API_KEY_HERE" or not OPENROUTER_SETTINGS.get("API_KEY"):
+                cli_ui.print_error("OpenRouter API key is a placeholder or missing. Please update it in config.py.", "Configuration Error")
+                return
+            connector = OpenRouterConnector(OPENROUTER_SETTINGS)
+        elif AI_PROVIDER == "gemini":
+            if GEMINI_SETTINGS.get("API_KEY") == "YOUR_GEMINI_API_KEY_HERE" or not GEMINI_SETTINGS.get("API_KEY"):
+                cli_ui.print_error("Gemini API key is a placeholder or missing. Please update it in config.py.", "Configuration Error")
+                return
+            connector = GeminiConnector(GEMINI_SETTINGS)
+        elif AI_PROVIDER == "openai":
+            if OPENAI_SETTINGS.get("API_KEY") == "YOUR_OPENAI_API_KEY_HERE" or not OPENAI_SETTINGS.get("API_KEY"):
+                cli_ui.print_error("OpenAI API key is a placeholder or missing. Please update it in config.py.", "Configuration Error")
+                return
+            connector = OpenAIConnector(OPENAI_SETTINGS)
+        else:
+            cli_ui.print_error(f"Unsupported AI provider: {AI_PROVIDER}. Please check config.py.", "Configuration Error")
+            return
+    except ValueError as ve: # Catch ValueError from connector __init__ if API key is missing after config file load
+        cli_ui.print_error(f"Configuration error for {AI_PROVIDER}: {ve}", "Configuration Error")
+        return
+    except Exception as e: # Catch any other unexpected error during instantiation
+        cli_ui.print_error(f"Failed to initialize AI connector {AI_PROVIDER}: {e}", "Critical Error")
+        return
 
-    if not cli_ui.print_startup_message_ui(connector):
+    if not connector: # Should be caught by the specific checks or the else above, but as a safeguard
+        cli_ui.print_error(f"AI Connector ({AI_PROVIDER}) could not be initialized. Please check your configuration and connector implementation.", "Critical Error")
+        return
+
+    if not cli_ui.print_startup_message_ui(connector): # This call now uses the dynamically initialized connector
         session_manager.save_session_context()
         return
 

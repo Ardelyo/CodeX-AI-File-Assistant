@@ -230,8 +230,56 @@ Follow these steps to get CodeX up and running:
 
 4.  **Configure CodeX:**
     *   Open `config.py`.
-    *   Verify `OLLAMA_API_BASE_URL` (default `http://localhost:11434` is typically correct).
-    *   **Crucial:** Set `OLLAMA_MODEL` to the exact name of the LLM model you have pulled via Ollama (e.g., `gemma:2b`, `llama3:8b`).
+    *   Open `config.py`. This file is central to determining which AI provider CodeX will use.
+    *   More details on configuring specific AI providers are in the section below.
+
+<div align="center">
+  <pre>╔════════════════════════════ ⊹ ════════════════════════════╗</pre>
+</div>
+
+## ⚙️ Configuring AI Providers
+
+CodeX supports multiple AI providers. You can choose which one to use by editing the `config.py` file.
+
+**Key Setting:**
+
+*   `AI_PROVIDER`: This variable in `config.py` determines which AI service CodeX will attempt to use.
+    *   Default: `"ollama"`
+    *   Available options: `"ollama"`, `"openrouter"`, `"gemini"`, `"openai"`
+
+**Provider-Specific Settings:**
+
+Below are the relevant settings in `config.py` for each provider:
+
+1.  **Ollama (`AI_PROVIDER = "ollama"`)**
+    *   Relevant settings: `OLLAMA_SETTINGS` dictionary.
+        *   `"BASE_URL"`: The base URL for your Ollama API (e.g., `"http://localhost:11434"`).
+        *   `"MODEL"`: The exact name of the Ollama model you want to use (e.g., `"gemma3:1b"`, `"llama3:8b"`).
+    *   **Setup:**
+        *   Ensure Ollama is installed and running on your system. You can download it from [ollama.ai](https://ollama.ai/).
+        *   Pull the desired model using the command: `ollama pull your_model_name` (e.g., `ollama pull llama3:8b`).
+        *   CodeX uses these local models for all its AI capabilities when Ollama is selected.
+
+2.  **OpenRouter (`AI_PROVIDER = "openrouter"`)**
+    *   Relevant settings: `OPENROUTER_SETTINGS` dictionary.
+        *   `"API_KEY"`: **Your OpenRouter API key.** You MUST replace the placeholder `"YOUR_OPENROUTER_API_KEY_HERE"` with your actual key.
+        *   `"MODEL"`: The model identifier for OpenRouter (e.g., `"mistralai/mistral-7b-instruct"`, `"openrouter/auto"` for automatic selection based on OpenRouter's routing).
+    *   **Note:** The OpenRouter connector is currently a **skeleton implementation**. While it sets up the basic structure, the actual API call logic for OpenRouter services (like chat completions, etc.) needs to be fully implemented by a developer.
+
+3.  **Gemini (`AI_PROVIDER = "gemini"`)**
+    *   Relevant settings: `GEMINI_SETTINGS` dictionary.
+        *   `"API_KEY"`: **Your Google AI Studio API key for Gemini.** You MUST replace the placeholder `"YOUR_GEMINI_API_KEY_HERE"` with your actual key.
+        *   `"MODEL"`: The Gemini model name (e.g., `"gemini-pro"`, `"gemini-1.5-flash"`).
+    *   **Note:** The Gemini connector is currently a **skeleton implementation**. The actual API call logic for Gemini services needs to be fully implemented.
+
+4.  **OpenAI (`AI_PROVIDER = "openai"`)**
+    *   Relevant settings: `OPENAI_SETTINGS` dictionary.
+        *   `"API_KEY"`: **Your OpenAI API key.** You MUST replace the placeholder `"YOUR_OPENAI_API_KEY_HERE"` with your actual key.
+        *   `"MODEL"`: The OpenAI model name (e.g., `"gpt-3.5-turbo"`, `"gpt-4"`).
+    *   **Note:** The OpenAI connector is currently a **skeleton implementation**. The actual API call logic for OpenAI services needs to be fully implemented.
+
+**Important Note on Skeleton Connectors:**
+The connectors for **OpenRouter, Gemini, and OpenAI are currently placeholder (skeleton) implementations.** This means they provide the basic structure for integration but **do not yet contain the full API call logic** to interact with these services. To use them, a developer will need to complete the implementation within their respective Python files (`openrouter_connector.py`, `gemini_connector.py`, `openai_connector.py`). For out-of-the-box functionality, **Ollama is the recommended and fully implemented provider.**
 
 <div align="center">
   <pre>╔════════════════════════════ ⊹ ════════════════════════════╗</pre>
